@@ -1,5 +1,5 @@
 local jojo = {
-    _VERSION = "0.0.1",
+    _VERSION = "0.0.2",
     _URL = "https://github.com/bakpakin/Jojo"
 }
 
@@ -30,6 +30,7 @@ jojo.Aspect = Aspect
 jojo.System = System
 
 local tinsert = table.insert
+local tremove = table.remove
 local tconcat = table.concat
 local pairs = pairs
 local ipairs = ipairs
@@ -156,12 +157,12 @@ function Aspect:__tostring()
         return "JojoAspect<>"
     else
         return "JojoAspect<Required: {" ..
-                tconcat(self[1], ", ") ..
-                "}, Excluded: {" ..
-                tconcat(self[2], ", ") ..
-                "}, One Req.: {" ..
-                tconcat(self[3], ", ") ..
-                "}>"
+        tconcat(self[1], ", ") ..
+        "}, Excluded: {" ..
+        tconcat(self[2], ", ") ..
+        "}, One Req.: {" ..
+        tconcat(self[3], ", ") ..
+        "}>"
     end
 end
 
@@ -216,6 +217,9 @@ function World:init(...)
     -- Table of Entity IDs to Entities
     self.entities = {}
 
+    -- Number of Entities in World.
+    self.entityCount = 0
+
     -- List of Systems
     self.systems = args
 
@@ -226,15 +230,54 @@ function World:init(...)
     -- Next available entity ID
     self.nextID = 0
 
-    -- Table of System indices to Sets of matching Entity IDs
+    -- Table of System IDs to Sets of matching Entity IDs
     local systemEntities = {}
     self.systemEntities = systemEntities
 
     for i, sys in ipairs(args) do
-        systemEntities[i] = {}
-        systemIndices[sys.id] = i
+        local id = sys.id
+        systemEntities[id] = {}
+        systemIndices[id] = i
     end
 
+    -- List of Systems to add next update
+    self.systemsToAdd = {}
+
+    -- List of System ids to remove next update
+    self.systemsToRemove = {}
+
+end
+
+function World:__tostring()
+    return "JojoWorld<systemCount: " ..
+    #self.systems ..
+    ", entityCount: " ..
+    #self.entityCount ..
+    ">"
+end
+
+-- World:addSystems(...)
+
+-- Appends Systems in order to the World. Systems will be added after the next
+-- call to World:update(dt)
+function World:addSystems(...)
+    local args = {...}
+    local systemsToAdd = self.systemsToAdd
+    for i, sys in ipairs(args) do
+        tinsert(systemsToAdd, sys)
+    end
+end
+
+-- World:freeSystems(...)
+
+-- Appends Systems in order to the World. Systems will be added after the next
+-- call to World:update(dt)
+function World:removeSystems(...)
+    local args = {...}
+    local systemsToRemove = self.systemsToRemove
+    for i, sys in ipairs(args) do
+        tinsert(systemsToRemove, sys)
+    end
 end
 
 -- World:add(...)
@@ -287,64 +330,87 @@ function World:update(dt)
 
     local statuses = self.status
     local systemEntities = self.systemEntities
+    local systemIndices = self.systemIndices
     local entities = self.entities
     local systems = self.systems
+    local systemsToAdd = self.systemsToAdd
+    local systemsToRemove = self.systemsToRemove
 
+    -- Remove all Systems queued for removal
+    for i = #systemsToRemove, 1, -1 do
+        -- Pop system off the remove stack
+        local sys = systemsToRemove[i]
+        systemsToRemove[i] = nil
+
+        local id = sys.id
+        local sysIndex = systemIndices[id]
+        tremove(systems, sysIndex)
+        systemEntities[id] = nil
+    end
+
+    -- Add Systems queued for addition
+    for i = 1, #systemsToAdd do
+        -- Pop system off the add queue
+        local sys = systemsToAdd[i]
+        systemsToAdd[i] = nil
+
+        -- Add system to world
+        local id = sys.id
+        local eids = {}
+        systemEntities[id] = eids
+        tinsert(systems, sys)
+        systemIndices[id] = #systems
+
+        local a = sys.aspect
+        for eid, e in pairs(entities) do
+            eids[eid] = a:matches(e) and true or nil
+        end
+    end
+
+    -- Kepp track of number of Entities in World
+    local deltaEntityCount = 0
+
+    -- Add, remove, or change Entities
     for eid, s in pairs(statuses) do
+        local e = entities[eid]
         if s == "add" then
-            local e = entities[eid]
-            for sysid, eids in pairs(systemEntities) do
-                local a = systems[sysid].aspect
+            deltaEntityCount = deltaEntityCount + 1
+            for sysID, eids in pairs(systemEntities) do
+                local a = systems[systemIndices[sysID]].aspect
                 eids[eid] = a:matches(e) and true or nil
             end
-            statuses[eid] = nil
-        end
-    end
-
-    for sysid, s in ipairs(self.systems) do
-
-        local preupdate = s.preupdate
-        local eids = systemEntities[sysid]
-        local active = s.active
-
-        -- Preupdate
-        if active and preupdate then
-            preupdate(dt)
-        end
-
-        if active then -- Free freed entities and update the others.
-
-            local u = s.update
-
-            for eid in pairs(eids) do
-                local status = statuses[eid]
-                if status == "remove" then
-                    eids[eid] = nil
-                else
-                    u(entities[eid], dt)
-                end
-            end
-
-        else -- Just free freed Entities
-
-            for eid in pairs(eids) do
-                if statuses[eid] == "remove" then
-                    eids[eid] = nil
-                end
-            end
-
-        end
-    end
-
-    -- Reset all statuses for next update
-    for eid, s in pairs(statuses) do
-        if s == "remove" then
-            entities[eid].id = nil
+        elseif s == "remove" then
+            deltaEntityCount = deltaEntityCount - 1
             entities[eid] = nil
+            for _, eids in pairs(systemEntities) do
+                eids[eid] = nil
+            end
         end
         statuses[eid] = nil
     end
 
+    -- Update Entity count
+    self.entityCount = self.entityCount + deltaEntityCount
+
+    --  Iterate through Systems IN ORDER
+    for _, s in ipairs(self.systems) do
+        if s.active then
+
+            local preupdate = s.preupdate
+            local update = s.update
+
+            if preupdate then
+                preupdate(dt)
+            end
+
+            if update then
+                local eids = systemEntities[s.id]
+                for eid in pairs(eids) do
+                    update(entities[eid], dt)
+                end
+            end
+        end
+    end
 end
 
 return jojo

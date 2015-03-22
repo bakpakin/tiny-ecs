@@ -51,7 +51,7 @@ local talkingSystem = System(
         print("Talking system has started.")
     end,
     function (p, delta)
-        print(p.name .. ", who weighs " .. p.mass .. "pounds, says, " .. p.phrase)
+        print(p.name .. ", who weighs " .. p.mass .. " pounds, says, \"" .. p.phrase .. "\"")
     end,
     personAspect
 )
@@ -61,7 +61,7 @@ local world = World(talkingSystem)
 local joe = {
     name = "Joe",
     phrase = "I'm a plumber.",
-    mass = 150,
+    mass = 250,
     hairColor = "brown"
 }
 

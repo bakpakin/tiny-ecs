@@ -83,11 +83,19 @@ assert(e1.xform.x == 21, "e1.xform.x should be 21, but is " .. e1.xform.x)
 assert(e2.xform.x == -19, "e2.xform.x should be -19, but is " .. e2.xform.x)
 assert(e3.xform.y == 68, "e3.xform.y should be 68, but is " .. e3.xform.y)
 
+world:removeSystems(moves)
+world:update(1234567890)
+world:addSystems(moves)
+
 world:remove(e3, e2)
 world:update(20)
 assert(e1.xform.x == 41, "e1.xform.x should be 41, but is " .. e1.xform.x)
 assert(e2.xform.x == -19, "e2.xform.x should be -19, but is " .. e2.xform.x)
 assert(e3.xform.y == 68, "e3.xform.y should be 68, but is " .. e3.xform.y)
+
+world:removeSystems(moves)
+world:update(12345)
+world:addSystems(moves)
 
 world:add(e3, e2)
 world:update(19)
