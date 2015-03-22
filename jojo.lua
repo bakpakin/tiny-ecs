@@ -29,7 +29,6 @@ jojo.World = World
 jojo.Aspect = Aspect
 jojo.System = System
 
-local tpack = table.pack
 local tinsert = table.insert
 local tremove = table.remove
 local tconcat = table.concat
@@ -98,10 +97,8 @@ end
 -- Composes multiple Aspects into one Aspect. The resulting Aspect will match
 -- any Entity that matches all sub Aspects.
 function Aspect.compose(...)
-    local args = tpack(...)
     local newa = {{}, {}, {}}
-    for j = 1, args.n do
-        local a = args[j]
+    for _, a in ipairs{...} do
         if a[4] then
             return Aspect()
         end
@@ -175,7 +172,7 @@ end
 -- Systems after creation.
 function World:init(...)
 
-        local args = tpack(...)
+        local args = {...}
 
         -- Table of Entity IDs to status
         self.status = {}
@@ -205,7 +202,7 @@ end
 
 -- Adds Entities to the World. An Entity is just a table of Components.
 function World:add(...)
-    local args = tpack(...)
+    local args = {...}
     local status = self.status
     local entities = self.entities
     for _, e in ipairs(args) do
@@ -222,7 +219,7 @@ end
 -- Call this function on any Entities that have changed such that they would
 -- now match different systems.
 function World:changed(...)
-    local args = tpack(...)
+    local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
         status[e._id] = "add"
@@ -233,7 +230,7 @@ end
 
 -- Frees Entities from the World.
 function World:free(...)
-    local args = tpack(...)
+    local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
         status[e._id] = "free"
