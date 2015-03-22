@@ -6,19 +6,19 @@ local jojo = {
 -- Simplified class implementation with no inheritance or polymorphism.
 local setmetatable = setmetatable
 local function class()
-   local c = {}
-   local mt = {}
-   setmetatable(c, mt)
-   c.__index = c
-   function mt.__call(_, ...)
-       local newobj = {}
-       setmetatable(newobj, c)
-       if c.init then
-           c.init(newobj, ...)
-       end
-       return newobj
-   end
-   return c
+    local c = {}
+    local mt = {}
+    setmetatable(c, mt)
+    c.__index = c
+    function mt.__call(_, ...)
+        local newobj = {}
+        setmetatable(newobj, c)
+        if c.init then
+            c.init(newobj, ...)
+        end
+        return newobj
+    end
+    return c
 end
 
 local World = class()
@@ -30,7 +30,6 @@ jojo.Aspect = Aspect
 jojo.System = System
 
 local tinsert = table.insert
-local tremove = table.remove
 local tconcat = table.concat
 local pairs = pairs
 local ipairs = ipairs
@@ -82,7 +81,7 @@ function Aspect:init(required, excluded, oneRequired)
     -- Iterate through one-required Components
     for _, v in ipairs(oneRequired or {}) do
         if requiredSet[v] then -- If one-required Comp. is also required,
-                                -- don't need one required Components
+            -- don't need one required Components
             self[3] = {}
             return
         end
@@ -97,17 +96,23 @@ end
 -- Composes multiple Aspects into one Aspect. The resulting Aspect will match
 -- any Entity that matches all sub Aspects.
 function Aspect.compose(...)
+
     local newa = {{}, {}, {}}
+
     for _, a in ipairs{...} do
-        if a[4] then
+
+        if a[4] then -- Aspect must be empty Aspect
             return Aspect()
         end
+
         for i = 1, 3 do
             for _, c in ipairs(a[i]) do
                 tinsert(newa[i], c)
             end
         end
+
     end
+
     return Aspect(newa[1], newa[2], newa[3])
 end
 
@@ -115,16 +120,26 @@ end
 
 -- Returns boolean indicating if an Entity matches the Aspect.
 function Aspect:matches(entity)
+
+    -- Aspect is the empty Aspect
     if self[4] then return false end
+
     local rs, es, os = self[1], self[2], self[3]
+
+    -- Assert Entity has all required Components
     for i = 1, #rs do
         local r = rs[i]
         if entity[r] == nil then return false end
     end
+
+    -- Assert Entity has no excluded Components
     for i = 1, #es do
         local e = es[i]
         if entity[e] ~= nil then return false end
     end
+
+    -- if Aspect has at least one Component in the one-required
+    -- field, assert that the Entity has at least one of these.
     if #os >= 1 then
         for i = 1, #os do
             local o = os[i]
@@ -132,23 +147,27 @@ function Aspect:matches(entity)
         end
         return false
     end
+
     return true
 end
 
--- Aspect:trace()
-
--- Prints out a description of this Aspect.
-function Aspect:trace()
+function Aspect:__tostring()
     if self[4] then
-        print("Empty Aspect.")
+        return "JojoAspect<>"
     else
-        print("Required Components:", tconcat(self[1], ", "))
-        print("Excluded Components:", tconcat(self[2], ", "))
-        print("One Req. Components:", tconcat(self[3], ", "))
+        return "JojoAspect<Required: {" ..
+                tconcat(self[1], ", ") ..
+                "}, Excluded: {" ..
+                tconcat(self[2], ", ") ..
+                "}, One Req.: {" ..
+                tconcat(self[3], ", ") ..
+                "}>"
     end
 end
 
 ----- System -----
+
+System.nextID = 0
 
 -- System(preupdate, update, [aspect])
 
@@ -162,6 +181,23 @@ function System:init(preupdate, update, aspect)
     self.update = update
     self.aspect = aspect or Aspect()
     self.active = true
+    local id = System.nextID
+    self.id = id
+    System.nextID = id + 1
+end
+
+function System:__tostring()
+    return "JojoSystem<id: "..
+    self.id ..
+    "preupdate: " ..
+    self.preupdate ..
+    ", update: " ..
+    self.update ..
+    ", aspect: " ..
+    self.aspect ..
+    ", active: " ..
+    self.active ..
+    ">"
 end
 
 ----- World -----
@@ -172,35 +208,39 @@ end
 -- Systems after creation.
 function World:init(...)
 
-        local args = {...}
+    local args = {...}
 
-        -- Table of Entity IDs to status
-        self.status = {}
+    -- Table of Entity IDs to status
+    self.status = {}
 
-        -- Table of Entity IDs to Entities
-        self.entities = {}
+    -- Table of Entity IDs to Entities
+    self.entities = {}
 
-        -- List of Systems
-        self.systems = args
+    -- List of Systems
+    self.systems = args
 
-        -- Accumulated time for each System.
-        self.times = {}
+    -- Table of System IDs to System Indices
+    local systemIndices = {}
+    self.systemIndices = systemIndices
 
-        -- Next available entity ID
-        self.nextID = 0
+    -- Next available entity ID
+    self.nextID = 0
 
-        -- Table of System indices to Sets of matching Entity IDs
-        local aspectEntities = {}
-        self.aspectEntities = aspectEntities
-        for i, sys in ipairs(args) do
-            aspectEntities[i] = {}
-        end
+    -- Table of System indices to Sets of matching Entity IDs
+    local systemEntities = {}
+    self.systemEntities = systemEntities
+
+    for i, sys in ipairs(args) do
+        systemEntities[i] = {}
+        systemIndices[sys.id] = i
+    end
 
 end
 
 -- World:add(...)
 
--- Adds Entities to the World. An Entity is just a table of Components.
+-- Adds Entities to the World. Entities will enter the World the next time
+-- World:update(dt) is called.
 function World:add(...)
     local args = {...}
     local status = self.status
@@ -208,7 +248,7 @@ function World:add(...)
     for _, e in ipairs(args) do
         local id = self.nextID
         self.nextID = id + 1
-        e._id = id
+        e.id = id
         entities[id] = e
         status[id] = "add"
     end
@@ -217,65 +257,88 @@ end
 -- World:changed(...)
 
 -- Call this function on any Entities that have changed such that they would
--- now match different systems.
-function World:changed(...)
+-- now match different systems. Entities will be updated in the world the next
+-- time World:update(dt) is called.
+function World:change(...)
     local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
-        status[e._id] = "add"
+        status[e.id] = "add"
     end
 end
 
 -- World:free(...)
 
--- Frees Entities from the World.
-function World:free(...)
+-- Removes Entities from the World. Entities will exit the World the next time
+-- World:update(dt) is called.
+function World:remove(...)
     local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
-        status[e._id] = "free"
+        status[e.id] = "remove"
     end
 end
 
 -- World:update()
 
--- Updates the World.
+-- Updates the World, frees Entities that have been marked for freeing, adds
+-- entities that have been marked for adding, etc.
 function World:update(dt)
 
     local statuses = self.status
-    local aspectEntities = self.aspectEntities
+    local systemEntities = self.systemEntities
     local entities = self.entities
     local systems = self.systems
 
     for eid, s in pairs(statuses) do
         if s == "add" then
             local e = entities[eid]
-            for sysi, set in pairs(aspectEntities) do
-                local a = systems[sysi].aspect
-                set[eid] = a:matches(e) and true or nil
+            for sysid, eids in pairs(systemEntities) do
+                local a = systems[sysid].aspect
+                eids[eid] = a:matches(e) and true or nil
             end
             statuses[eid] = nil
         end
     end
 
-    for sysi, s in ipairs(self.systems) do
+    for sysid, s in ipairs(self.systems) do
+
         local preupdate = s.preupdate
-        if s.active and preupdate then
+        local eids = systemEntities[sysid]
+        local active = s.active
+
+        -- Preupdate
+        if active and preupdate then
             preupdate(dt)
         end
-        local eids = aspectEntities[sysi]
-        local u = s.update
-        for eid in pairs(eids) do
-            local status = statuses[eid]
-            if status == "free" then
-                eids[eid] = nil
+
+        if active then -- Free freed entities and update the others.
+
+            local u = s.update
+
+            for eid in pairs(eids) do
+                local status = statuses[eid]
+                if status == "remove" then
+                    eids[eid] = nil
+                else
+                    u(entities[eid], dt)
+                end
             end
-            u(entities[eid], dt)
+
+        else -- Just free freed Entities
+
+            for eid in pairs(eids) do
+                if statuses[eid] == "remove" then
+                    eids[eid] = nil
+                end
+            end
+
         end
     end
 
+    -- Reset all statuses for next update
     for eid, s in pairs(statuses) do
-        if s == "free" then
+        if s == "remove" then
             entities[eid].id = nil
             entities[eid] = nil
         end

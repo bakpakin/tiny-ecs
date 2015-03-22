@@ -80,16 +80,20 @@ local world = World(moves)
 world:add(e1, e2, e3)
 world:update(21)
 assert(e1.xform.x == 21, "e1.xform.x should be 21, but is " .. e1.xform.x)
+assert(e2.xform.x == -19, "e2.xform.x should be -19, but is " .. e2.xform.x)
+assert(e3.xform.y == 68, "e3.xform.y should be 68, but is " .. e3.xform.y)
 
-world:free(e3, e2)
+world:remove(e3, e2)
 world:update(20)
 assert(e1.xform.x == 41, "e1.xform.x should be 41, but is " .. e1.xform.x)
+assert(e2.xform.x == -19, "e2.xform.x should be -19, but is " .. e2.xform.x)
+assert(e3.xform.y == 68, "e3.xform.y should be 68, but is " .. e3.xform.y)
 
 world:add(e3, e2)
 world:update(19)
-world:free(e3, e2)
+world:remove(e3, e2)
 e1.vel = nil
-world:changed(e1)
+world:change(e1)
 world:update(11)
 
 assert(e1.xform.x == 60, "e1.xform.x should be 60, but is " .. e1.xform.x)
