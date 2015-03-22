@@ -47,10 +47,9 @@ local System = jojo.System
 
 local personAspect = Aspect({"name", "mass", "phrase"})
 local talkingSystem = System(
-    function (delta)
-        print("Talking system has started.")
-    end,
+    nil,
     function (p, delta)
+        p.mass = p.mass + delta * 3
         print(p.name .. ", who weighs " .. p.mass .. " pounds, says, \"" .. p.phrase .. "\"")
     end,
     personAspect
@@ -61,13 +60,15 @@ local world = World(talkingSystem)
 local joe = {
     name = "Joe",
     phrase = "I'm a plumber.",
-    mass = 250,
+    mass = 150,
     hairColor = "brown"
 }
 
 world:add(joe)
 
-world:update(1)
+for i = 1, 20 do
+    world:update(1)
+end
 ```
 
 ## Testing ##
