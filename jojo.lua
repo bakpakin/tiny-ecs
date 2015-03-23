@@ -170,18 +170,22 @@ end
 
 System.nextID = 0
 
--- System(preupdate, update, [aspect])
+-- System(preupdate, update, [aspect, addCallback, removeCallback])
 
 -- Creates a new System with the given aspect and update callback. The update
 -- callback should be a function of one parameter, an entity. If no aspect is
 -- provided the empty Aspect, which matches no Entity, is used. Preupdate is a
 -- function of no arguments that is called once per system update before the
--- entities are updated.
-function System:init(preupdate, update, aspect)
+-- entities are updated. The add and remove callbacks are optional functions
+-- that are called when entities are added or removed from the system. They
+-- should each take one argument - an Entity.
+function System:init(preupdate, update, aspect, add, remove)
     self.preupdate = preupdate
     self.update = update
     self.aspect = aspect or Aspect()
     self.active = true
+    self.add = add
+    self.remove = remove
     local id = System.nextID
     self.id = id
     System.nextID = id + 1
@@ -342,9 +346,18 @@ function World:update(dt)
         local sys = systemsToRemove[i]
         systemsToRemove[i] = nil
 
+
         local id = sys.id
         local sysIndex = systemIndices[id]
         tremove(systems, sysIndex)
+
+        local removec = sys.remove
+        if removec then -- call 'remove' on all entities in the System
+            for eid in pairs(systemEntities[id]) do
+                removec(entities[eid])
+            end
+        end
+
         systemEntities[id] = nil
     end
 
@@ -376,13 +389,23 @@ function World:update(dt)
         if s == "add" then
             deltaEntityCount = deltaEntityCount + 1
             for sysID, eids in pairs(systemEntities) do
-                local a = systems[systemIndices[sysID]].aspect
-                eids[eid] = a:matches(e) and true or nil
+                local sys = systems[systemIndices[sysID]]
+                local matches = sys.aspect:matches(e) and true or nil
+                local addc = sys.add
+                if addc and matches and not eids[eid] then
+                    addc(e)
+                end
+                eids[eid] = matches
             end
         elseif s == "remove" then
             deltaEntityCount = deltaEntityCount - 1
             entities[eid] = nil
-            for _, eids in pairs(systemEntities) do
+            for sysID, eids in pairs(systemEntities) do
+                local sys = systems[systemIndices[sysID]]
+                local removec = sys.remove
+                if removec then
+                    removec(e)
+                end
                 eids[eid] = nil
             end
         end
@@ -411,6 +434,30 @@ function World:update(dt)
             end
         end
     end
+end
+
+-- World:clearEntities()
+
+-- Removes all Entities from the World. When World:update(dt) is next called,
+-- all Entities will be removed.
+function World:clearEntities()
+    local status = self.status
+    for eid in pairs(self.entity) do
+        status[eid] = "remove"
+    end
+end
+
+-- World:clearSystems()
+
+-- Removes all Systems from the World. When World:update(dt) is next called,
+-- all Systems will be removed.
+function World:clearSystems()
+    local newSystemsToRemove = {}
+    local systems = self.systems
+    for i = 1, #systems do
+        newSystemsToRemove[i] = systems[i].id
+    end
+    self.systemsToRemove = newSystemsToRemove
 end
 
 return jojo
