@@ -326,6 +326,25 @@ function World:remove(...)
     end
 end
 
+-- World:updateSystem(system, dt)
+
+function World:updateSystem(system, dt)
+    local preupdate = system.preupdate
+    local update = system.update
+    local systemEntities = self.systemEntities
+
+    if preupdate then
+        preupdate(dt)
+    end
+
+    if update then
+        local entities = self.entities
+        local eids = systemEntities[system.id]
+        for eid in pairs(eids) do
+            update(entities[eid], dt)
+        end
+    end
+end
 -- World:update()
 
 -- Updates the World, frees Entities that have been marked for freeing, adds
@@ -418,20 +437,7 @@ function World:update(dt)
     --  Iterate through Systems IN ORDER
     for _, s in ipairs(self.systems) do
         if s.active then
-
-            local preupdate = s.preupdate
-            local update = s.update
-
-            if preupdate then
-                preupdate(dt)
-            end
-
-            if update then
-                local eids = systemEntities[s.id]
-                for eid in pairs(eids) do
-                    update(entities[eid], dt)
-                end
-            end
+            self:updateSystem(s, dt)
         end
     end
 end
