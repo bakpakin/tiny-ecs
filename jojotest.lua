@@ -101,7 +101,7 @@ world:add(e3, e2)
 world:update(19)
 world:remove(e3, e2)
 e1.vel = nil
-world:change(e1)
+world:add(e1)
 world:update(11)
 
 assert(e1.xform.x == 60, "e1.xform.x should be 60, but is " .. e1.xform.x)

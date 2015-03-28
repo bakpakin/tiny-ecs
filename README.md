@@ -77,7 +77,7 @@ run `lua jojotest.lua` from command line.
 
 ## TODO ##
 
-* Dynamically add and remove systems
+* Dynamic reordering of Systems
 * More testing
 * Performance testing / optimization
 * API outside of source code

@@ -1,5 +1,5 @@
 local jojo = {
-    _VERSION = "0.0.3",
+    _VERSION = "0.0.4",
     _URL = "https://github.com/bakpakin/Jojo",
     _DESCRIPTION = "Entity Component System for lua."
 }
@@ -36,7 +36,6 @@ local tremove = table.remove
 local tconcat = table.concat
 local pairs = pairs
 local ipairs = ipairs
-local print = print
 
 ----- Aspect -----
 
@@ -183,7 +182,6 @@ function System:init(preupdate, update, aspect, add, remove)
     self.preupdate = preupdate
     self.update = update
     self.aspect = aspect or Aspect()
-    self.active = true
     self.add = add
     self.remove = remove
 end
@@ -195,8 +193,6 @@ function System:__tostring()
     self.update ..
     ", aspect: " ..
     self.aspect ..
-    ", active: " ..
-    self.active ..
     ">"
 end
 
@@ -222,6 +218,10 @@ function World:init(...)
     -- List of Systems
     self.systems = args
 
+    -- Table of Systems to whether or not they are active.
+    local activeSystems = {}
+    self.activeSystems = activeSystems
+
     -- Table of Systems to System Indices
     local systemIndices = {}
     self.systemIndices = systemIndices
@@ -231,6 +231,7 @@ function World:init(...)
     self.systemEntities = systemEntities
 
     for i, sys in ipairs(args) do
+        activeSystems[sys] = true
         systemEntities[sys] = {}
         systemIndices[sys] = i
     end
@@ -290,19 +291,6 @@ function World:add(...)
     end
 end
 
--- World:changed(...)
-
--- Call this function on any Entities that have changed such that they would
--- now match different systems. Entities will be updated in the world the next
--- time World:update(dt) is called.
-function World:change(...)
-    local args = {...}
-    local status = self.status
-    for _, e in ipairs(args) do
-        status[e] = "add"
-    end
-end
-
 -- World:free(...)
 
 -- Removes Entities from the World. Entities will exit the World the next time
@@ -349,6 +337,7 @@ function World:update(dt)
     local systems = self.systems
     local systemsToAdd = self.systemsToAdd
     local systemsToRemove = self.systemsToRemove
+    local activeSystems = self.activeSystems
 
     -- Remove all Systems queued for removal
     for i = #systemsToRemove, 1, -1 do
@@ -367,6 +356,7 @@ function World:update(dt)
         end
 
         systemEntities[sys] = nil
+        activeSystems[sys] = nil
     end
 
     -- Add Systems queued for addition
@@ -380,6 +370,7 @@ function World:update(dt)
         systemEntities[sys] = es
         tinsert(systems, sys)
         systemIndices[sys] = #systems
+        activeSystems[sys] = true
 
         local a = sys.aspect
         for e in pairs(entities) do
@@ -421,7 +412,7 @@ function World:update(dt)
 
     --  Iterate through Systems IN ORDER
     for _, s in ipairs(self.systems) do
-        if s.active then
+        if activeSystems[s] then
             self:updateSystem(s, dt)
         end
     end
