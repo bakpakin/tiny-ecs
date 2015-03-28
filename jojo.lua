@@ -340,8 +340,10 @@ function World:updateSystem(system, dt)
     if update then
         local entities = self.entities
         local eids = systemEntities[system.id]
-        for eid in pairs(eids) do
-            update(entities[eid], dt)
+        if eids then
+            for eid in pairs(eids) do
+                update(entities[eid], dt)
+            end
         end
     end
 end
