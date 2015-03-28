@@ -442,4 +442,13 @@ function World:clearSystems()
     self.systemsToRemove = newSystemsToRemove
 end
 
+-- World:setSystemActive(system, active)
+
+-- Sets if a System is active in a world. If the system is active, it will
+-- update automatically when World:update(dt) is called. Otherwise, the user
+-- must call World:updateSystem(system, dt) to update the unactivated system.
+function World:setSystemActive(system, active)
+    self.activeSystem[system] = active and true or nil
+end
+
 return jojo
