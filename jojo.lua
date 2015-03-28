@@ -1,15 +1,17 @@
 local jojo = {
-    _VERSION = "0.0.2",
-    _URL = "https://github.com/bakpakin/Jojo"
+    _VERSION = "0.0.3",
+    _URL = "https://github.com/bakpakin/Jojo",
+    _DESCRIPTION = "Entity Component System for lua."
 }
 
 -- Simplified class implementation with no inheritance or polymorphism.
 local setmetatable = setmetatable
-local function class()
+local function class(name)
     local c = {}
     local mt = {}
     setmetatable(c, mt)
     c.__index = c
+    c.name = name
     function mt.__call(_, ...)
         local newobj = {}
         setmetatable(newobj, c)
@@ -21,9 +23,9 @@ local function class()
     return c
 end
 
-local World = class()
-local Aspect = class()
-local System = class()
+local World = class("World")
+local Aspect = class("Aspect")
+local System = class("System")
 
 jojo.World = World
 jojo.Aspect = Aspect
@@ -168,8 +170,6 @@ end
 
 ----- System -----
 
-System.nextID = 0
-
 -- System(preupdate, update, [aspect, addCallback, removeCallback])
 
 -- Creates a new System with the given aspect and update callback. The update
@@ -186,15 +186,10 @@ function System:init(preupdate, update, aspect, add, remove)
     self.active = true
     self.add = add
     self.remove = remove
-    local id = System.nextID
-    self.id = id
-    System.nextID = id + 1
 end
 
 function System:__tostring()
-    return "JojoSystem<id: "..
-    self.id ..
-    "preupdate: " ..
+    return "JojoSystem<preupdate: " ..
     self.preupdate ..
     ", update: " ..
     self.update ..
@@ -215,10 +210,10 @@ function World:init(...)
 
     local args = {...}
 
-    -- Table of Entity IDs to status
+    -- Table of Entities to status
     self.status = {}
 
-    -- Table of Entity IDs to Entities
+    -- Set of Entities
     self.entities = {}
 
     -- Number of Entities in World.
@@ -227,27 +222,23 @@ function World:init(...)
     -- List of Systems
     self.systems = args
 
-    -- Table of System IDs to System Indices
+    -- Table of Systems to System Indices
     local systemIndices = {}
     self.systemIndices = systemIndices
 
-    -- Next available entity ID
-    self.nextID = 0
-
-    -- Table of System IDs to Sets of matching Entity IDs
+    -- Table of Systems to Sets of matching Entities
     local systemEntities = {}
     self.systemEntities = systemEntities
 
     for i, sys in ipairs(args) do
-        local id = sys.id
-        systemEntities[id] = {}
-        systemIndices[id] = i
+        systemEntities[sys] = {}
+        systemIndices[sys] = i
     end
 
     -- List of Systems to add next update
     self.systemsToAdd = {}
 
-    -- List of System ids to remove next update
+    -- List of Systems to remove next update
     self.systemsToRemove = {}
 
 end
@@ -287,17 +278,15 @@ end
 -- World:add(...)
 
 -- Adds Entities to the World. Entities will enter the World the next time
--- World:update(dt) is called.
+-- World:update(dt) is called. Also call this method when an Entity has had its
+-- Components changed, such that it matches different Aspects.
 function World:add(...)
     local args = {...}
     local status = self.status
     local entities = self.entities
     for _, e in ipairs(args) do
-        local id = self.nextID
-        self.nextID = id + 1
-        e.id = id
-        entities[id] = e
-        status[id] = "add"
+        entities[e] = true
+        status[e] = "add"
     end
 end
 
@@ -310,7 +299,7 @@ function World:change(...)
     local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
-        status[e.id] = "add"
+        status[e] = "add"
     end
 end
 
@@ -322,7 +311,7 @@ function World:remove(...)
     local args = {...}
     local status = self.status
     for _, e in ipairs(args) do
-        status[e.id] = "remove"
+        status[e] = "remove"
     end
 end
 
@@ -339,10 +328,10 @@ function World:updateSystem(system, dt)
 
     if update then
         local entities = self.entities
-        local eids = systemEntities[system.id]
-        if eids then
-            for eid in pairs(eids) do
-                update(entities[eid], dt)
+        local es = systemEntities[system]
+        if es then
+            for e in pairs(es) do
+                update(e, dt)
             end
         end
     end
@@ -367,19 +356,17 @@ function World:update(dt)
         local sys = systemsToRemove[i]
         systemsToRemove[i] = nil
 
-
-        local id = sys.id
-        local sysIndex = systemIndices[id]
+        local sysIndex = systemIndices[sys]
         tremove(systems, sysIndex)
 
-        local removec = sys.remove
-        if removec then -- call 'remove' on all entities in the System
-            for eid in pairs(systemEntities[id]) do
-                removec(entities[eid])
+        local removeCallback = sys.remove
+        if removeCallback then -- call 'remove' on all entities in the System
+            for e in pairs(systemEntities[sys]) do
+                removeCallback(e)
             end
         end
 
-        systemEntities[id] = nil
+        systemEntities[sys] = nil
     end
 
     -- Add Systems queued for addition
@@ -389,15 +376,14 @@ function World:update(dt)
         systemsToAdd[i] = nil
 
         -- Add system to world
-        local id = sys.id
-        local eids = {}
-        systemEntities[id] = eids
+        local es = {}
+        systemEntities[sys] = es
         tinsert(systems, sys)
-        systemIndices[id] = #systems
+        systemIndices[sys] = #systems
 
         local a = sys.aspect
-        for eid, e in pairs(entities) do
-            eids[eid] = a:matches(e) and true or nil
+        for e in pairs(entities) do
+            es[e] = a:matches(e) and true or nil
         end
     end
 
@@ -405,32 +391,29 @@ function World:update(dt)
     local deltaEntityCount = 0
 
     -- Add, remove, or change Entities
-    for eid, s in pairs(statuses) do
-        local e = entities[eid]
+    for e, s in pairs(statuses) do
         if s == "add" then
             deltaEntityCount = deltaEntityCount + 1
-            for sysID, eids in pairs(systemEntities) do
-                local sys = systems[systemIndices[sysID]]
+            for sys, es in pairs(systemEntities) do
                 local matches = sys.aspect:matches(e) and true or nil
-                local addc = sys.add
-                if addc and matches and not eids[eid] then
-                    addc(e)
+                local addCallback = sys.add
+                if addCallback and matches and not es[e] then
+                    addCallback(e)
                 end
-                eids[eid] = matches
+                es[e] = matches
             end
         elseif s == "remove" then
             deltaEntityCount = deltaEntityCount - 1
-            entities[eid] = nil
-            for sysID, eids in pairs(systemEntities) do
-                local sys = systems[systemIndices[sysID]]
+            entities[e] = nil
+            for sys, es in pairs(systemEntities) do
                 local removec = sys.remove
                 if removec then
                     removec(e)
                 end
-                eids[eid] = nil
+                es[e] = nil
             end
         end
-        statuses[eid] = nil
+        statuses[e] = nil
     end
 
     -- Update Entity count
@@ -450,8 +433,8 @@ end
 -- all Entities will be removed.
 function World:clearEntities()
     local status = self.status
-    for eid in pairs(self.entity) do
-        status[eid] = "remove"
+    for e in pairs(self.entities) do
+        status[e] = "remove"
     end
 end
 
@@ -463,7 +446,7 @@ function World:clearSystems()
     local newSystemsToRemove = {}
     local systems = self.systems
     for i = 1, #systems do
-        newSystemsToRemove[i] = systems[i].id
+        newSystemsToRemove[i] = systems[i]
     end
     self.systemsToRemove = newSystemsToRemove
 end

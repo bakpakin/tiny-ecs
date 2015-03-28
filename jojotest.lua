@@ -75,7 +75,7 @@ local moves = System(
     amove
 )
 
-local world = World(moves)
+local world = World(moves, System(nil, nil, aall))
 
 world:add(e1, e2, e3)
 world:update(21)
