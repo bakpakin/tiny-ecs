@@ -1,9 +1,5 @@
 local tiny = require "tiny"
 
-local World = tiny.World
-local Aspect = tiny.Aspect
-local System = tiny.System
-
 -- Taken from answer at http://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
 local function deep_copy(o, seen)
   seen = seen or {}
@@ -39,7 +35,8 @@ local entityTemplate2 = {
     vel = {x = -1, y = 0},
     name = "E2",
     size = 10,
-    description = "It does not go to 11."
+    description = "It does not go to 11.",
+    onlyTen = true
 }
 
 local entityTemplate3 = {
@@ -47,12 +44,13 @@ local entityTemplate3 = {
     vel = {x = 0, y = 3},
     name = "E3",
     size = 8,
-    description = "The smallest entity."
+    description = "The smallest entity.",
+    littleMan = true
 }
 
 describe('tiny-ecs:', function()
 
-    describe('Aspect:', function()
+    describe('Filters:', function()
 
         local entity1, entity2, entity3
 
@@ -62,21 +60,22 @@ describe('tiny-ecs:', function()
             entity3 = deep_copy(entityTemplate3)
         end)
 
-        it("Correctly match Aspects and Entities", function()
+        it("Default Filters", function()
 
-            local atap = Aspect({"spinalTap"})
-            local avel = Aspect({"vel"})
-            local axform = Aspect({"xform"})
-            local aall = Aspect({})
-            local aboth = Aspect.compose(atap, axform)
-            local amove = Aspect.compose(axform, avel)
+            local ftap = tiny.requireAll("spinalTap")
+            local fvel = tiny.requireAll("vel")
+            local fxform = tiny.requireAll("xform")
+            local fall = tiny.requireOne("spinalTap", "onlyTen", "littleMan")
 
-            assert.truthy(atap:matches(entity1))
-            assert.falsy(atap:matches(entity2))
-            assert.truthy(axform:matches(entity1))
-            assert.truthy(axform:matches(entity2))
-            assert.truthy(aboth:matches(entity1))
-            assert.falsy(aboth:matches(entity2))
+            assert.truthy(fall(entity1))
+            assert.truthy(ftap(entity1))
+            assert.falsy(ftap(entity2))
+            assert.truthy(fxform(entity1))
+            assert.truthy(fxform(entity2))
+
+            assert.truthy(fall(entity1))
+            assert.truthy(fall(entity2))
+            assert.truthy(fall(entity3))
 
         end)
 
@@ -86,20 +85,19 @@ describe('tiny-ecs:', function()
 
         local world, entity1, entity2, entity3
 
-        local moveSystem = System(
-            nil,
+        local moveSystem = tiny.processingSystem(
+            tiny.requireAll("xform", "vel"),
             function(e, dt)
                 local xform = e.xform
                 local vel = e.vel
                 local x, y = xform.x, xform.y
                 local xvel, yvel = vel.x, vel.y
                 xform.x, xform.y = x + xvel * dt, y + yvel * dt
-            end,
-            Aspect({"xform", "vel"})
+            end
         )
 
         local timePassed = 0
-        local oneTimeSystem = System(
+        local oneTimeSystem = tiny.emptySystem(
             function(dt)
                 timePassed = timePassed + dt
             end
@@ -109,7 +107,7 @@ describe('tiny-ecs:', function()
             entity1 = deep_copy(entityTemplate1)
             entity2 = deep_copy(entityTemplate2)
             entity3 = deep_copy(entityTemplate3)
-            world = World(moveSystem, oneTimeSystem, entity1, entity2, entity3)
+            world = tiny.newWorld(moveSystem, oneTimeSystem, entity1, entity2, entity3)
             timePassed = 0
         end)
 

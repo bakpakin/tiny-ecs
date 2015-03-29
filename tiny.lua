@@ -12,13 +12,12 @@ local ipairs = ipairs
 local setmetatable = setmetatable
 local getmetatable = getmetatable
 
--- Simplified class implementation with no inheritance or polymorphism.
-local function class(name)
+-- Simple class implementation with no inheritance or polymorphism.
+local function class()
     local c = {}
     local mt = {}
     setmetatable(c, mt)
     c.__index = c
-    c.name = name
     function mt.__call(_, ...)
         local newobj = {}
         setmetatable(newobj, c)
@@ -30,159 +29,14 @@ local function class(name)
     return c
 end
 
-local World = class("World")
-local Aspect = class("Aspect")
-local System = class("System")
+-- --- System --- --
+local System = class()
 
-tiny.World = World
-tiny.Aspect = Aspect
-tiny.System = System
-
------ Aspect -----
-
--- Aspect(required, excluded, oneRequired)
-
--- Creates an Aspect. Aspects are used to select which Entities are inlcuded
--- in each system. An Aspect has three fields, namely all required Components,
--- all excluded Components, and Components of which a system requires only one.
--- If an Entitiy has all required Components, none of the excluded Components,
--- and at least one of the oneRequired Components, it matches the Aspects.
--- This method expects at least one and up to three lists of strings, the names
--- of components. If no arguments are supplied, the Aspect will not match any
--- Entities. Will not mutate supplied arguments.
-function Aspect:init(required, excluded, oneRequired)
-
-    local r, e, o = {}, {}, {}
-    self[1], self[2], self[3] = r, e, o
-
-    -- Check for empty Aspect
-    if not required and not oneRequired then
-        self[4] = true
-        return
-    end
-    self[4] = false
-
-    local excludeSet, requiredSet = {}, {}
-
-    -- Iterate through excluded Components
-    for _, v in ipairs(excluded or {}) do
-        tinsert(e, v)
-        excludeSet[v] = true
-    end
-
-    -- Iterate through required Components
-    for _, v in ipairs(required or {}) do
-        if excludeSet[v] then -- If Comp. is required and excluded, empty Aspect
-            self[1], self[2], self[3], self[4] = {}, {}, {}, true
-            return
-        else
-            tinsert(r, v)
-            requiredSet[v] = true
-        end
-    end
-
-    -- Iterate through one-required Components
-    for _, v in ipairs(oneRequired or {}) do
-        if requiredSet[v] then -- If one-required Comp. is also required,
-            -- don't need one required Components
-            self[3] = {}
-            return
-        end
-        if not excludeSet[v] then
-            tinsert(o, v)
-        end
-    end
-end
-
--- Aspect.compose(...)
-
--- Composes multiple Aspects into one Aspect. The resulting Aspect will match
--- any Entity that matches all sub Aspects.
-function Aspect.compose(...)
-
-    local newa = {{}, {}, {}}
-
-    for _, a in ipairs{...} do
-
-        if a[4] then -- Aspect must be empty Aspect
-            return Aspect()
-        end
-
-        for i = 1, 3 do
-            for _, c in ipairs(a[i]) do
-                tinsert(newa[i], c)
-            end
-        end
-
-    end
-
-    return Aspect(newa[1], newa[2], newa[3])
-end
-
--- Aspect:matches(entity)
-
--- Returns boolean indicating if an Entity matches the Aspect.
-function Aspect:matches(entity)
-
-    -- Aspect is the empty Aspect
-    if self[4] then return false end
-
-    local rs, es, os = self[1], self[2], self[3]
-
-    -- Assert Entity has all required Components
-    for i = 1, #rs do
-        local r = rs[i]
-        if entity[r] == nil then return false end
-    end
-
-    -- Assert Entity has no excluded Components
-    for i = 1, #es do
-        local e = es[i]
-        if entity[e] ~= nil then return false end
-    end
-
-    -- if Aspect has at least one Component in the one-required
-    -- field, assert that the Entity has at least one of these.
-    if #os >= 1 then
-        for i = 1, #os do
-            local o = os[i]
-            if entity[o] ~= nil then return true end
-        end
-        return false
-    end
-
-    return true
-end
-
-function Aspect:__tostring()
-    if self[4] then
-        return "TinyAspect<>"
-    else
-        return "TinyAspect<Required: {" ..
-        tconcat(self[1], ", ") ..
-        "}, Excluded: {" ..
-        tconcat(self[2], ", ") ..
-        "}, One Req.: {" ..
-        tconcat(self[3], ", ") ..
-        "}>"
-    end
-end
-
------ System -----
-
--- System(preupdate, update, [aspect, addCallback, removeCallback])
-
--- Creates a new System with the given aspect and update callback. The update
--- callback should be a function of one parameter, an entity. If no aspect is
--- provided the empty Aspect, which matches no Entity, is used. Preupdate is a
--- function of no arguments that is called once per system update before the
--- entities are updated. The add and remove callbacks are optional functions
--- that are called when entities are added or removed from the system. They
--- should each take one argument - an Entity.
-function System:init(preupdate, update, aspect, add, remove)
+-- Initializes a System.
+function System:init(preupdate, filter, update, add, remove)
     self.preupdate = preupdate
     self.update = update
-    self.aspect = aspect or Aspect()
+    self.filter = filter
     self.add = add
     self.remove = remove
 end
@@ -192,16 +46,15 @@ function System:__tostring()
     self.preupdate ..
     ", update: " ..
     self.update ..
-    ", aspect: " ..
-    self.aspect ..
+    ", filter: " ..
+    self.filter ..
     ">"
 end
 
------ World -----
+-- --- World --- --
+local World = class()
 
--- World(...)
-
--- Creates a new World with the given Systems and Entities in order.
+-- Initializes a World.
 function World:init(...)
 
     -- Table of Entities to status
@@ -252,7 +105,7 @@ end
 
 -- Adds Entities and Systems to the World. New objects will enter the World the
 -- next time World:update(dt) is called. Also call this method when an Entity
--- has had its Components changed, such that it matches different Aspects.
+-- has had its Components changed, such that it matches different Filters.
 function World:add(...)
     local args = {...}
     local status = self.status
@@ -275,11 +128,12 @@ end
 function World:remove(...)
     local args = {...}
     local status = self.status
+    local entities = self.entities
     local systemsToRemove = self.systemsToRemove
     for _, obj in ipairs(args) do
         if getmetatable(obj) == System then
             tinsert(systemsToRemove, obj)
-        else -- Assume obj is an Entity
+        elseif entities[obj] then -- Assume obj is an Entity
             status[obj] = "remove"
         end
     end
@@ -360,9 +214,11 @@ function World:manageSystems()
             systemIndices[sys] = #systems
             activeSystems[sys] = true
 
-            local a = sys.aspect
-            for e in pairs(entities) do
-                es[e] = a:matches(e) and true or nil
+            local a = sys.filter
+            if a then
+                for e in pairs(entities) do
+                    es[e] = a(e) and true or nil
+                end
             end
 
             deltaSystemCount = deltaSystemCount + 1
@@ -391,19 +247,22 @@ function World:manageEntities()
         if s == "add" then
             deltaEntityCount = deltaEntityCount + 1
             for sys, es in pairs(systemEntities) do
-                local matches = sys.aspect:matches(e) and true or nil
-                local addCallback = sys.add
-                if addCallback and matches and not es[e] then
-                    addCallback(e)
+                local filter = sys.filter
+                if filter then
+                    local matches = filter(e) and true or nil
+                    local addCallback = sys.add
+                    if addCallback and matches and not es[e] then
+                        addCallback(e)
+                    end
+                    es[e] = matches
                 end
-                es[e] = matches
             end
         elseif s == "remove" then
             deltaEntityCount = deltaEntityCount - 1
             entities[e] = nil
             for sys, es in pairs(systemEntities) do
                 local removec = sys.remove
-                if removec then
+                if es[e] and removec then
                     removec(e)
                 end
                 es[e] = nil
@@ -465,6 +324,64 @@ end
 -- must call World:updateSystem(system, dt) to update the unactivated system.
 function World:setSystemActive(system, active)
     self.activeSystem[system] = active and true or nil
+end
+
+-- --- Top Level module functions --- --
+
+--- Creates a new tiny-ecs World.
+function tiny.newWorld(...)
+    return World(...)
+end
+
+--- Makes a Filter that filters Entities with specified Components.
+-- An Entity must have all Components to match the filter.
+function tiny.requireAll(...)
+    local components = {...}
+    local len = #components
+    return function(e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if e[c] == nil then
+                return false
+            end
+        end
+        return true
+    end
+end
+
+--- Makes a Filter that filters Entities with specified Components.
+-- An Entity must have at least one specified Component to match the filter.
+function tiny.requireOne(...)
+    local components = {...}
+    local len = #components
+    return function(e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if e[c] ~= nil then
+                return true
+            end
+        end
+        return false
+    end
+end
+
+--- Creates a System that doesn't update any Entities, but executes a callback
+-- once per update.
+function tiny.emptySystem(callback)
+    return System(callback)
+end
+
+--- Creates a System that processes Entities every update. Also provides
+-- optional callbacks for when Entities are added or removed from the System.
+function tiny.processingSystem(filter, entityCallback, onAdd, onRemove)
+    return System(nil, filter, entityCallback, onAdd, onRemove)
+end
+
+--- Creates a System.
+function tiny.system(callback, filter, entityCallback, onAdd, onRemove)
+    return System(callback, filter, entityCallback, onAdd, onRemove)
 end
 
 return tiny

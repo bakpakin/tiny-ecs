@@ -9,8 +9,9 @@ Component Systems, here is some
 Copy paste tiny.lua into your source folder.
 
 ## Overview ##
-Tiny-ecs has four important types: Worlds, Aspects, Systems, and Entities.
-Entities, however, can be any lua table.
+Tiny-ecs has four important types: Worlds, Filters, Systems, and Entities.
+Entities, however, can be any lua table, and Filters are just functions that
+take an Entity as a parameter.
 
 ### Entities ###
 Entities are simply lua tables of data that gets processed by Systems. Entities
@@ -24,32 +25,25 @@ and Entities. In typical use, only one World is used at a time.
 
 ### Systems ###
 Systems in tiny-ecs describe how to update Entities. Systems select certain Entities
-using an aspect, and then only update those select Entities. Systems have three
-parts: a one-time update function, a per Entity update function, and an Aspect.
-The one-time update function is called once per World update, and the per Entity
-update function is called once per Entity per World update. The Aspect is used
-to select which Entities the System will update.
+using a Filter, and then only update those select Entities. Some Systems don't
+update Entities, and instead just act as function callbacks every update. Tiny-ecs
+provides functions for creating Systems easily.
 
-### Aspects ###
-Aspects are used to select Entities by the presence or absence of specific
-Components. If an Entity contains all Components required by an Aspect, and
-doesn't contain Components that are excluded by the Aspect, it is said to match
-the Aspect. Aspects can also be composed into more complicated Aspects that
-are equivalent to the union of all sub-Aspects.
+### Filters ###
+Filters are used to select Entities. Filters can be any lua function, but
+tiny-ecs provides some functions for generating common ones, like selecting
+only Entities that have all required components.
 
 ## Example ##
 ```lua
 local tiny = require("tiny")
 
-local personAspect = tiny.Aspect({"name", "mass", "phrase"})
-
-local talkingSystem = tiny.System(
-    nil,
+local talkingSystem = tiny.processingSystem(
+    tiny.requireAll("name", "mass", "phrase"),
     function (p, delta)
         p.mass = p.mass + delta * 3
         print(p.name .. ", who weighs " .. p.mass .. " pounds, says, \"" .. p.phrase .. "\"")
-    end,
-    personAspect
+    end
 )
 
 local joe = {
@@ -59,7 +53,7 @@ local joe = {
     hairColor = "brown"
 }
 
-local world = tiny.World(talkingSystem, joe)
+local world = tiny.newWorld(talkingSystem, joe)
 
 for i = 1, 20 do
     world:update(1)
