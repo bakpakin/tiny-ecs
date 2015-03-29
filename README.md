@@ -46,6 +46,7 @@ local Aspect = jojo.Aspect
 local System = jojo.System
 
 local personAspect = Aspect({"name", "mass", "phrase"})
+
 local talkingSystem = System(
     nil,
     function (p, delta)
@@ -55,8 +56,6 @@ local talkingSystem = System(
     personAspect
 )
 
-local world = World(talkingSystem)
-
 local joe = {
     name = "Joe",
     phrase = "I'm a plumber.",
@@ -64,7 +63,7 @@ local joe = {
     hairColor = "brown"
 }
 
-world:add(joe)
+local world = World(talkingSystem, joe)
 
 for i = 1, 20 do
     world:update(1)
@@ -72,8 +71,8 @@ end
 ```
 
 ## Testing ##
-To test Jojo, simply clone the project, cd into the project directory, and
-run `lua jojotest.lua` from command line.
+Jojo uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
+`busted` from the command line to test.
 
 ## TODO ##
 

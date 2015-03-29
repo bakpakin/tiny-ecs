@@ -1,11 +1,18 @@
 local jojo = {
-    _VERSION = "0.0.4",
+    _VERSION = "0.1.0",
     _URL = "https://github.com/bakpakin/Jojo",
-    _DESCRIPTION = "Entity Component System for lua."
+    _DESCRIPTION = "jojo - Entity Component System for lua."
 }
 
--- Simplified class implementation with no inheritance or polymorphism.
+local tinsert = table.insert
+local tremove = table.remove
+local tconcat = table.concat
+local pairs = pairs
+local ipairs = ipairs
 local setmetatable = setmetatable
+local getmetatable = getmetatable
+
+-- Simplified class implementation with no inheritance or polymorphism.
 local function class(name)
     local c = {}
     local mt = {}
@@ -30,12 +37,6 @@ local System = class("System")
 jojo.World = World
 jojo.Aspect = Aspect
 jojo.System = System
-
-local tinsert = table.insert
-local tremove = table.remove
-local tconcat = table.concat
-local pairs = pairs
-local ipairs = ipairs
 
 ----- Aspect -----
 
@@ -200,11 +201,8 @@ end
 
 -- World(...)
 
--- Creates a new World with the given Systems in order. TODO - Add or remove
--- Systems after creation.
+-- Creates a new World with the given Systems and Entities in order.
 function World:init(...)
-
-    local args = {...}
 
     -- Table of Entities to status
     self.status = {}
@@ -215,26 +213,20 @@ function World:init(...)
     -- Number of Entities in World.
     self.entityCount = 0
 
+    -- Number of Systems in World.
+    self.systemCount = 0
+
     -- List of Systems
-    self.systems = args
+    self.systems = {}
 
     -- Table of Systems to whether or not they are active.
-    local activeSystems = {}
-    self.activeSystems = activeSystems
+    self.activeSystems = {}
 
     -- Table of Systems to System Indices
-    local systemIndices = {}
-    self.systemIndices = systemIndices
+    self.systemIndices = {}
 
     -- Table of Systems to Sets of matching Entities
-    local systemEntities = {}
-    self.systemEntities = systemEntities
-
-    for i, sys in ipairs(args) do
-        activeSystems[sys] = true
-        systemEntities[sys] = {}
-        systemIndices[sys] = i
-    end
+    self.systemEntities = {}
 
     -- List of Systems to add next update
     self.systemsToAdd = {}
@@ -242,73 +234,63 @@ function World:init(...)
     -- List of Systems to remove next update
     self.systemsToRemove = {}
 
+    -- Add Systems and Entities
+    self:add(...)
+    self:manageSystems()
+    self:manageEntities()
 end
 
 function World:__tostring()
     return "JojoWorld<systemCount: " ..
-    #self.systems ..
+    self.systemCount ..
     ", entityCount: " ..
-    #self.entityCount ..
+    self.entityCount ..
     ">"
-end
-
--- World:addSystems(...)
-
--- Appends Systems in order to the World. Systems will be added after the next
--- call to World:update(dt)
-function World:addSystems(...)
-    local args = {...}
-    local systemsToAdd = self.systemsToAdd
-    for i, sys in ipairs(args) do
-        tinsert(systemsToAdd, sys)
-    end
-end
-
--- World:freeSystems(...)
-
--- Appends Systems in order to the World. Systems will be added after the next
--- call to World:update(dt)
-function World:removeSystems(...)
-    local args = {...}
-    local systemsToRemove = self.systemsToRemove
-    for i, sys in ipairs(args) do
-        tinsert(systemsToRemove, sys)
-    end
 end
 
 -- World:add(...)
 
--- Adds Entities to the World. Entities will enter the World the next time
--- World:update(dt) is called. Also call this method when an Entity has had its
--- Components changed, such that it matches different Aspects.
+-- Adds Entities and Systems to the World. New objects will enter the World the
+-- next time World:update(dt) is called. Also call this method when an Entity
+-- has had its Components changed, such that it matches different Aspects.
 function World:add(...)
     local args = {...}
     local status = self.status
     local entities = self.entities
-    for _, e in ipairs(args) do
-        entities[e] = true
-        status[e] = "add"
+    local systemsToAdd = self.systemsToAdd
+    for _, obj in ipairs(args) do
+        if getmetatable(obj) == System then
+            tinsert(systemsToAdd, obj)
+        else -- Assume obj is an Entity
+            entities[obj] = true
+            status[obj] = "add"
+        end
     end
 end
 
 -- World:free(...)
 
--- Removes Entities from the World. Entities will exit the World the next time
--- World:update(dt) is called.
+-- Removes Entities and Systems from the World. Objects will exit the World the
+-- next time World:update(dt) is called.
 function World:remove(...)
     local args = {...}
     local status = self.status
-    for _, e in ipairs(args) do
-        status[e] = "remove"
+    local systemsToRemove = self.systemsToRemove
+    for _, obj in ipairs(args) do
+        if getmetatable(obj) == System then
+            tinsert(systemsToRemove, obj)
+        else -- Assume obj is an Entity
+            status[obj] = "remove"
+        end
     end
 end
 
 -- World:updateSystem(system, dt)
 
+-- Updates a System
 function World:updateSystem(system, dt)
     local preupdate = system.preupdate
     local update = system.update
-    local systemEntities = self.systemEntities
 
     if preupdate then
         preupdate(dt)
@@ -316,7 +298,7 @@ function World:updateSystem(system, dt)
 
     if update then
         local entities = self.entities
-        local es = systemEntities[system]
+        local es = self.systemEntities[system]
         if es then
             for e in pairs(es) do
                 update(e, dt)
@@ -324,61 +306,84 @@ function World:updateSystem(system, dt)
         end
     end
 end
--- World:update()
 
--- Updates the World, frees Entities that have been marked for freeing, adds
--- entities that have been marked for adding, etc.
-function World:update(dt)
+-- World:manageSystems()
 
-    local statuses = self.status
-    local systemEntities = self.systemEntities
-    local systemIndices = self.systemIndices
-    local entities = self.entities
-    local systems = self.systems
-    local systemsToAdd = self.systemsToAdd
-    local systemsToRemove = self.systemsToRemove
-    local activeSystems = self.activeSystems
+-- Adds and removes Systems that have been marked from the world. The user of
+-- this library should seldom if ever call this.
+function World:manageSystems()
 
-    -- Remove all Systems queued for removal
-    for i = #systemsToRemove, 1, -1 do
-        -- Pop system off the remove stack
-        local sys = systemsToRemove[i]
-        systemsToRemove[i] = nil
+        local systemEntities = self.systemEntities
+        local systemIndices = self.systemIndices
+        local entities = self.entities
+        local systems = self.systems
+        local systemsToAdd = self.systemsToAdd
+        local systemsToRemove = self.systemsToRemove
+        local activeSystems = self.activeSystems
 
-        local sysIndex = systemIndices[sys]
-        tremove(systems, sysIndex)
+        -- Keep track of the number of Systems in the world
+        local deltaSystemCount = 0
 
-        local removeCallback = sys.remove
-        if removeCallback then -- call 'remove' on all entities in the System
-            for e in pairs(systemEntities[sys]) do
-                removeCallback(e)
+        -- Remove all Systems queued for removal
+        for i = 1, #systemsToRemove do
+            -- Pop system off the remove queue
+            local sys = systemsToRemove[i]
+            systemsToRemove[i] = nil
+
+            local sysID = systemIndices[sys]
+            if sysID then
+                tremove(systems, sysID)
+
+                local removeCallback = sys.remove
+                if removeCallback then -- call 'remove' on all entities in the System
+                    for e in pairs(systemEntities[sys]) do
+                        removeCallback(e)
+                    end
+                end
+
+                systemEntities[sys] = nil
+                activeSystems[sys] = nil
+                deltaSystemCount = deltaSystemCount - 1
             end
         end
 
-        systemEntities[sys] = nil
-        activeSystems[sys] = nil
-    end
+        -- Add Systems queued for addition
+        for i = 1, #systemsToAdd do
+            -- Pop system off the add queue
+            local sys = systemsToAdd[i]
+            systemsToAdd[i] = nil
 
-    -- Add Systems queued for addition
-    for i = 1, #systemsToAdd do
-        -- Pop system off the add queue
-        local sys = systemsToAdd[i]
-        systemsToAdd[i] = nil
+            -- Add system to world
+            local es = {}
+            systemEntities[sys] = es
+            tinsert(systems, sys)
+            systemIndices[sys] = #systems
+            activeSystems[sys] = true
 
-        -- Add system to world
-        local es = {}
-        systemEntities[sys] = es
-        tinsert(systems, sys)
-        systemIndices[sys] = #systems
-        activeSystems[sys] = true
+            local a = sys.aspect
+            for e in pairs(entities) do
+                es[e] = a:matches(e) and true or nil
+            end
 
-        local a = sys.aspect
-        for e in pairs(entities) do
-            es[e] = a:matches(e) and true or nil
+            deltaSystemCount = deltaSystemCount + 1
         end
-    end
 
-    -- Kepp track of number of Entities in World
+        -- Update the number of Systems in the World
+        self.systemCount = self.systemCount + deltaSystemCount
+end
+
+-- World:manageEntities()
+
+-- Adds and removes Entities that have been marked. The user of this library
+-- should seldom if ever call this.
+function World:manageEntities()
+
+    local statuses = self.status
+    local systemEntities = self.systemEntities
+    local entities = self.entities
+    local systems = self.systems
+
+    -- Keep track of the number of Entities in the World
     local deltaEntityCount = 0
 
     -- Add, remove, or change Entities
@@ -410,9 +415,20 @@ function World:update(dt)
     -- Update Entity count
     self.entityCount = self.entityCount + deltaEntityCount
 
+end
+
+-- World:update()
+
+-- Updates the World, frees Entities that have been marked for freeing, adds
+-- entities that have been marked for adding, etc.
+function World:update(dt)
+
+    self:manageSystems()
+    self:manageEntities()
+
     --  Iterate through Systems IN ORDER
     for _, s in ipairs(self.systems) do
-        if activeSystems[s] then
+        if self.activeSystems[s] then
             self:updateSystem(s, dt)
         end
     end
