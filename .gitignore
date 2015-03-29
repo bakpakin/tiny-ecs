@@ -1,2 +1,5 @@
 #Ignore generated documentation
 doc/*
+index.html
+ldoc.css
+topics/*

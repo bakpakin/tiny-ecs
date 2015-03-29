@@ -65,7 +65,7 @@ Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and 
 `busted` from the command line to test.
 
 ## Documentation ##
-See API [here](http://bakpakin.github.io/tiny-ecs/).
+See API [here](http://bakpakin.github.io/tiny-ecs/doc/).
 Documentation can be generated locally with [LDoc](http://stevedonovan.github.io/ldoc/).
 
 ## TODO ##
