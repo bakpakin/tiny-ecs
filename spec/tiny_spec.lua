@@ -1,8 +1,8 @@
-local jojo = require "jojo"
+local tiny = require "tiny"
 
-local World = jojo.World
-local Aspect = jojo.Aspect
-local System = jojo.System
+local World = tiny.World
+local Aspect = tiny.Aspect
+local System = tiny.System
 
 -- Taken from answer at http://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
 local function deep_copy(o, seen)
@@ -50,7 +50,7 @@ local entityTemplate3 = {
     description = "The smallest entity."
 }
 
-describe('Jojo:', function()
+describe('tiny-ecs:', function()
 
     describe('Aspect:', function()
 

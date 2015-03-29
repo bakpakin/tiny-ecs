@@ -1,7 +1,7 @@
-local jojo = {
-    _VERSION = "0.1.0",
-    _URL = "https://github.com/bakpakin/Jojo",
-    _DESCRIPTION = "jojo - Entity Component System for lua."
+local tiny = {
+    _VERSION = "0.2.0",
+    _URL = "https://github.com/bakpakin/tiny-ecs",
+    _DESCRIPTION = "tiny-ecs - Entity Component System for lua."
 }
 
 local tinsert = table.insert
@@ -34,9 +34,9 @@ local World = class("World")
 local Aspect = class("Aspect")
 local System = class("System")
 
-jojo.World = World
-jojo.Aspect = Aspect
-jojo.System = System
+tiny.World = World
+tiny.Aspect = Aspect
+tiny.System = System
 
 ----- Aspect -----
 
@@ -156,9 +156,9 @@ end
 
 function Aspect:__tostring()
     if self[4] then
-        return "JojoAspect<>"
+        return "TinyAspect<>"
     else
-        return "JojoAspect<Required: {" ..
+        return "TinyAspect<Required: {" ..
         tconcat(self[1], ", ") ..
         "}, Excluded: {" ..
         tconcat(self[2], ", ") ..
@@ -188,7 +188,7 @@ function System:init(preupdate, update, aspect, add, remove)
 end
 
 function System:__tostring()
-    return "JojoSystem<preupdate: " ..
+    return "TinySystem<preupdate: " ..
     self.preupdate ..
     ", update: " ..
     self.update ..
@@ -241,7 +241,7 @@ function World:init(...)
 end
 
 function World:__tostring()
-    return "JojoWorld<systemCount: " ..
+    return "TinyWorld<systemCount: " ..
     self.systemCount ..
     ", entityCount: " ..
     self.entityCount ..
@@ -467,4 +467,4 @@ function World:setSystemActive(system, active)
     self.activeSystem[system] = active and true or nil
 end
 
-return jojo
+return tiny

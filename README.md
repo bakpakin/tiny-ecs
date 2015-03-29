@@ -1,15 +1,15 @@
-# Jojo #
-Jojo is an Entity Component System for lua that's simple, flexible, and useful.
+# tiny-ecs #
+Tiny-ecs is an Entity Component System for lua that's simple, flexible, and useful.
 Because of lua's tabular nature, Entity Component Systems are a natural choice
 for simulating large and complex systems. For more explanation on Entity
 Component Systems, here is some
 [basic info](http://en.wikipedia.org/wiki/Entity_component_system "Wikipedia").
 
 ## Use It ##
-Copy paste jojo.lua into your source folder.
+Copy paste tiny.lua into your source folder.
 
 ## Overview ##
-Jojo has four important types: Worlds, Aspects, Systems, and Entities.
+Tiny-ecs has four important types: Worlds, Aspects, Systems, and Entities.
 Entities, however, can be any lua table.
 
 ### Entities ###
@@ -19,11 +19,11 @@ do logic on data. Henceforth, a key-value pair in an Entity will
 be referred to as a Component.
 
 ### Worlds ###
-Worlds are the outermost containers in Jojo that contain both Systems
+Worlds are the outermost containers in tiny-ecs that contain both Systems
 and Entities. In typical use, only one World is used at a time.
 
 ### Systems ###
-Systems in Jojo describe how to update Entities. Systems select certain Entities
+Systems in tiny-ecs describe how to update Entities. Systems select certain Entities
 using an aspect, and then only update those select Entities. Systems have three
 parts: a one-time update function, a per Entity update function, and an Aspect.
 The one-time update function is called once per World update, and the per Entity
@@ -39,15 +39,11 @@ are equivalent to the union of all sub-Aspects.
 
 ## Example ##
 ```lua
-local jojo = require("jojo")
+local tiny = require("tiny")
 
-local World = jojo.World
-local Aspect = jojo.Aspect
-local System = jojo.System
+local personAspect = tiny.Aspect({"name", "mass", "phrase"})
 
-local personAspect = Aspect({"name", "mass", "phrase"})
-
-local talkingSystem = System(
+local talkingSystem = tiny.System(
     nil,
     function (p, delta)
         p.mass = p.mass + delta * 3
@@ -63,7 +59,7 @@ local joe = {
     hairColor = "brown"
 }
 
-local world = World(talkingSystem, joe)
+local world = tiny.World(talkingSystem, joe)
 
 for i = 1, 20 do
     world:update(1)
@@ -71,7 +67,7 @@ end
 ```
 
 ## Testing ##
-Jojo uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
+Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
 `busted` from the command line to test.
 
 ## TODO ##
@@ -80,3 +76,4 @@ Jojo uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
 * More testing
 * Performance testing / optimization
 * API outside of source code
+* Add more complete examples
