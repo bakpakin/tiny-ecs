@@ -1,0 +1,535 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>tiny-ecs</h1>
+
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Fields">Fields</a></li>
+<li><a href="#Filter_functions">Filter functions </a></li>
+<li><a href="#System_functions">System functions </a></li>
+<li><a href="#World_functions">World functions </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><strong>tiny-ecs</strong></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>tiny-ecs</code></h1>
+<p></p>
+<p></p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Author</strong>: Calvin Rose</li>
+    </ul>
+
+
+<h2><a href="#Fields">Fields</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#tiny._VERSION">tiny._VERSION</a></td>
+	<td class="summary">Tiny-ecs Version, a period-separated three number string like "1.2.3" with
+ no leading zeros.</td>
+	</tr>
+</table>
+<h2><a href="#Filter_functions">Filter functions </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#tiny.requireAll">tiny.requireAll (...)</a></td>
+	<td class="summary">Makes a Filter that filters Entities with specified Components.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.requireOne">tiny.requireOne (...)</a></td>
+	<td class="summary">Makes a Filter that filters Entities with specified Components.</td>
+	</tr>
+</table>
+<h2><a href="#System_functions">System functions </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#tiny.processingSystem">tiny.processingSystem (filter, entityCallback, onAdd, onRemove)</a></td>
+	<td class="summary">Creates a System that processes Entities every update.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.system">tiny.system (callback, filter, entityCallback, onAdd, onRemove)</a></td>
+	<td class="summary">Creates a System.</td>
+	</tr>
+</table>
+<h2><a href="#World_functions">World functions </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#tiny.add">tiny.add (world, ...)</a></td>
+	<td class="summary">Adds Entities and Systems to the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.clearEntities">tiny.clearEntities (world)</a></td>
+	<td class="summary">Removes all Entities from the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.clearSystems">tiny.clearSystems (world)</a></td>
+	<td class="summary">Removes all Systems from the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.manageEntities">tiny.manageEntities (world)</a></td>
+	<td class="summary">Adds and removes Entities that have been marked.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.manageSystems">tiny.manageSystems (world)</a></td>
+	<td class="summary">Adds and removes Systems that have been marked from the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.remove">tiny.remove (world, ...)</a></td>
+	<td class="summary">Removes Entities and Systems from the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.setSystemActive">tiny.setSystemActive (world, system, active)</a></td>
+	<td class="summary">Sets if a System is active in a world.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.update">tiny.update (world, dt)</a></td>
+	<td class="summary">Updates the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.updateSystem">tiny.updateSystem (world, system, dt)</a></td>
+	<td class="summary">Updates a System.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.world">tiny.world (...)</a></td>
+	<td class="summary">Creates a new World.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Fields"></a>Fields</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "tiny._VERSION"></a>
+    <strong>tiny._VERSION</strong>
+    </dt>
+    <dd>
+    Tiny-ecs Version, a period-separated three number string like "1.2.3" with
+ no leading zeros.
+
+
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="Filter_functions"></a>Filter functions </h2>
+
+
+ A Filter is a function that selects which Entities apply to a System.
+    <dl class="function">
+    <dt>
+    <a name = "tiny.requireAll"></a>
+    <strong>tiny.requireAll (...)</strong>
+    </dt>
+    <dd>
+    Makes a Filter that filters Entities with specified Components.
+ An Entity must have all Components to match the filter.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+         List of Components
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.requireOne"></a>
+    <strong>tiny.requireOne (...)</strong>
+    </dt>
+    <dd>
+    Makes a Filter that filters Entities with specified Components.
+ An Entity must have at least one specified Component to match the filter.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+         List of Components
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="System_functions"></a>System functions </h2>
+
+
+ A System a wrapper around function callbacks for manipulating Entities.
+    <dl class="function">
+    <dt>
+    <a name = "tiny.processingSystem"></a>
+    <strong>tiny.processingSystem (filter, entityCallback, onAdd, onRemove)</strong>
+    </dt>
+    <dd>
+    Creates a System that processes Entities every update.  Also provides
+ optional callbacks for when Entities are added or removed from the System.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">filter</span>
+         Function of one argument, an Entity, that returns a boolean
+        </li>
+        <li><span class="parameter">entityCallback</span>
+         Function of two arguments, an Entity and delta time
+        </li>
+        <li><span class="parameter">onAdd</span>
+         Optional callback for when Entities are added to the System that
+ takes one argument, an Entity
+        </li>
+        <li><span class="parameter">onRemove</span>
+         Similar to onAdd, but is instead called when an Entity is
+ removed from the System
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.system"></a>
+    <strong>tiny.system (callback, filter, entityCallback, onAdd, onRemove)</strong>
+    </dt>
+    <dd>
+    Creates a System.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">callback</span>
+         Function of one argument, delta time, that is called once
+ per world update
+        </li>
+        <li><span class="parameter">filter</span>
+         Function of one argument, an Entity, that returns a boolean
+        </li>
+        <li><span class="parameter">entityCallback</span>
+         Function of two arguments, an Entity and delta time
+        </li>
+        <li><span class="parameter">onAdd</span>
+         Optional callback for when Enities are added to the System that
+ takes one argument, an Entity
+        </li>
+        <li><span class="parameter">onRemove</span>
+         Similar to onAdd, but is instead called when an Entity is
+ removed from the System
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="World_functions"></a>World functions </h2>
+
+
+ A World is a container that manages Entities and Systems. The tiny-ecs module
+ is set to be the <code>__index</code> of all World tables, so the often clearer syntax of
+ World:method can be used for any function in the library. For example,
+ <code>tiny.add(world, e1, e2, e3)</code> is the same as <code>world:add(e1, e2, e3).</code>
+    <dl class="function">
+    <dt>
+    <a name = "tiny.add"></a>
+    <strong>tiny.add (world, ...)</strong>
+    </dt>
+    <dd>
+    Adds Entities and Systems to the World.
+ New objects will enter the World the next time World:update(dt) is called.
+ Also call this method when an Entity has had its Components changed, such
+ that it matches different Filters.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">...</span>
+         Systems and Entities
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.clearEntities"></a>
+    <strong>tiny.clearEntities (world)</strong>
+    </dt>
+    <dd>
+    Removes all Entities from the World.
+ When World:update(dt) is next called,
+ all Entities will be removed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.clearSystems"></a>
+    <strong>tiny.clearSystems (world)</strong>
+    </dt>
+    <dd>
+    Removes all Systems from the World.
+ When World:update(dt) is next called,
+ all Systems will be removed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.manageEntities"></a>
+    <strong>tiny.manageEntities (world)</strong>
+    </dt>
+    <dd>
+    Adds and removes Entities that have been marked.
+ The user of this library should seldom if ever call this.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.manageSystems"></a>
+    <strong>tiny.manageSystems (world)</strong>
+    </dt>
+    <dd>
+    Adds and removes Systems that have been marked from the World.
+ The user of this library should seldom if ever call this.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.remove"></a>
+    <strong>tiny.remove (world, ...)</strong>
+    </dt>
+    <dd>
+    Removes Entities and Systems from the World.  Objects will exit the World the
+ next time World:update(dt) is called.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">...</span>
+         Systems and Entities
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.setSystemActive"></a>
+    <strong>tiny.setSystemActive (world, system, active)</strong>
+    </dt>
+    <dd>
+    Sets if a System is active in a world.  If the system is active, it will
+ update automatically when World:update(dt) is called. Otherwise, the user
+ must call World:updateSystem(system, dt) to update the unactivated system.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+         A System in the World activate/deactivate
+        </li>
+        <li><span class="parameter">active</span>
+         Boolean new state of the System
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.update"></a>
+    <strong>tiny.update (world, dt)</strong>
+    </dt>
+    <dd>
+    Updates the World.
+ Frees Entities that have been marked for freeing, adds
+ entities that have been marked for adding, etc.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">dt</span>
+         Delta time
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.updateSystem"></a>
+    <strong>tiny.updateSystem (world, system, dt)</strong>
+    </dt>
+    <dd>
+    Updates a System.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+         A System in the World to update
+        </li>
+        <li><span class="parameter">dt</span>
+         Delta time
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.world"></a>
+    <strong>tiny.world (...)</strong>
+    </dt>
+    <dd>
+    Creates a new World.
+ Can optionally add default Systems and Entities.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+         Systems and Entities to add to the World
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        A new World
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-03-29 20:36:32 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

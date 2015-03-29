@@ -1,0 +1,452 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>tiny-ecs</h1>
+
+
+
+
+<h2>Source</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><strong>tiny.lua</strong></li>
+</ul>
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../index.html">tiny-ecs</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+    <h2>tiny.lua</h2>
+<pre>
+<span class="comment">--- @module tiny-ecs
+</span><span class="comment">-- @author Calvin Rose
+</span><span class="keyword">local</span> tiny = {}
+
+<span class="comment">--- Tiny-ecs Version, a period-separated three number string like "1.2.3" with
+</span><a id="7"></a><span class="comment">-- no leading zeros.
+</span>tiny._VERSION = <span class="string">"0.3.0"</span>
+
+<span class="keyword">local</span> tinsert = <span class="global">table</span>.insert
+<span class="keyword">local</span> tremove = <span class="global">table</span>.remove
+<span class="keyword">local</span> tconcat = <span class="global">table</span>.concat
+<span class="keyword">local</span> <span class="global">pairs</span> = <span class="global">pairs</span>
+<span class="keyword">local</span> <span class="global">ipairs</span> = <span class="global">ipairs</span>
+<span class="keyword">local</span> <span class="global">setmetatable</span> = <span class="global">setmetatable</span>
+<span class="keyword">local</span> <span class="global">getmetatable</span> = <span class="global">getmetatable</span>
+
+<span class="comment">-- Local versions of the library functions
+</span><span class="keyword">local</span> tiny_system
+<span class="keyword">local</span> tiny_manageEntities
+<span class="keyword">local</span> tiny_manageSystems
+<span class="keyword">local</span> tiny_updateSystem
+<span class="keyword">local</span> tiny_add
+<span class="keyword">local</span> tiny_remove
+
+<span class="comment">--- Filter functions.
+</span><span class="comment">-- A Filter is a function that selects which Entities apply to a System.
+</span><span class="comment">-- @section Filter
+</span>
+<span class="comment">--- Makes a Filter that filters Entities with specified Components.
+</span><span class="comment">-- An Entity must have all Components to match the filter.
+</span><a id="32"></a><span class="comment">-- @param ... List of Components
+</span><span class="keyword">function</span> tiny.requireAll(...)
+    <span class="keyword">local</span> components = {...}
+    <span class="keyword">local</span> len = #components
+    <span class="keyword">return</span> <span class="keyword">function</span>(e)
+        <span class="keyword">local</span> c
+        <span class="keyword">for</span> i = <span class="number">1</span>, len <span class="keyword">do</span>
+            c = components[i]
+            <span class="keyword">if</span> e[c] == <span class="keyword">nil</span> <span class="keyword">then</span>
+                <span class="keyword">return</span> <span class="keyword">false</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">return</span> <span class="keyword">true</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">--- Makes a Filter that filters Entities with specified Components.
+</span><span class="comment">-- An Entity must have at least one specified Component to match the filter.
+</span><a id="50"></a><span class="comment">-- @param ... List of Components
+</span><span class="keyword">function</span> tiny.requireOne(...)
+    <span class="keyword">local</span> components = {...}
+    <span class="keyword">local</span> len = #components
+    <span class="keyword">return</span> <span class="keyword">function</span>(e)
+        <span class="keyword">local</span> c
+        <span class="keyword">for</span> i = <span class="number">1</span>, len <span class="keyword">do</span>
+            c = components[i]
+            <span class="keyword">if</span> e[c] ~= <span class="keyword">nil</span> <span class="keyword">then</span>
+                <span class="keyword">return</span> <span class="keyword">true</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="keyword">return</span> <span class="keyword">false</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">--- System functions.
+</span><span class="comment">-- A System a wrapper around function callbacks for manipulating Entities.
+</span><span class="comment">-- @section System
+</span>
+<span class="keyword">local</span> systemMetaTable = {}
+
+<span class="comment">--- Creates a System.
+</span><span class="comment">-- @param callback Function of one argument, delta time, that is called once
+</span><span class="comment">-- per world update
+</span><span class="comment">-- @param filter Function of one argument, an Entity, that returns a boolean
+</span><span class="comment">-- @param entityCallback Function of two arguments, an Entity and delta time
+</span><span class="comment">-- @param onAdd Optional callback for when Enities are added to the System that
+</span><span class="comment">-- takes one argument, an Entity
+</span><span class="comment">-- @param onRemove Similar to onAdd, but is instead called when an Entity is
+</span><a id="80"></a><span class="comment">-- removed from the System
+</span><span class="keyword">function</span> tiny.system(callback, filter, entityCallback, onAdd, onRemove)
+    <span class="keyword">local</span> ret = {
+        callback = callback,
+        filter = filter,
+        entityCallback = entityCallback,
+        onAdd = onAdd,
+        onRemove = onRemove
+    }
+    <span class="global">setmetatable</span>(ret, systemMetaTable)
+    <span class="keyword">return</span> ret
+<span class="keyword">end</span>
+tiny_system = tiny.system
+
+<span class="comment">--- Creates a System that processes Entities every update. Also provides
+</span><span class="comment">-- optional callbacks for when Entities are added or removed from the System.
+</span><span class="comment">-- @param filter Function of one argument, an Entity, that returns a boolean
+</span><span class="comment">-- @param entityCallback Function of two arguments, an Entity and delta time
+</span><span class="comment">-- @param onAdd Optional callback for when Entities are added to the System that
+</span><span class="comment">-- takes one argument, an Entity
+</span><span class="comment">-- @param onRemove Similar to onAdd, but is instead called when an Entity is
+</span><a id="101"></a><span class="comment">-- removed from the System
+</span><span class="keyword">function</span> tiny.processingSystem(filter, entityCallback, onAdd, onRemove)
+    <span class="keyword">return</span> tiny_system(<span class="keyword">nil</span>, filter, entityCallback, onAdd, onRemove)
+<span class="keyword">end</span>
+
+<span class="keyword">local</span> worldMetaTable = { __index = tiny }
+
+<span class="comment">--- World functions.
+</span><span class="comment">-- A World is a container that manages Entities and Systems. The tiny-ecs module
+</span><span class="comment">-- is set to be the <code>__index</code> of all World tables, so the often clearer syntax of
+</span><span class="comment">-- World:method can be used for any function in the library. For example,
+</span><span class="comment">-- <code>tiny.add(world, e1, e2, e3)</code> is the same as <code>world:add(e1, e2, e3).</code>
+</span><span class="comment">-- @section World
+</span>
+<span class="comment">--- Creates a new World.
+</span><span class="comment">-- Can optionally add default Systems and Entities.
+</span><span class="comment">-- @param ... Systems and Entities to add to the World
+</span><a id="118"></a><span class="comment">-- @return A new World
+</span><span class="keyword">function</span> tiny.world(...)
+
+    <span class="keyword">local</span> ret = {
+
+        <span class="comment">-- Table of Entities to status
+</span>        status = {},
+
+        <span class="comment">-- Set of Entities
+</span>        entities = {},
+
+        <span class="comment">-- Number of Entities in World.
+</span>        entityCount = <span class="number">0</span>,
+
+        <span class="comment">-- Number of Systems in World.
+</span>        systemCount = <span class="number">0</span>,
+
+        <span class="comment">-- List of Systems
+</span>        systems = {},
+
+        <span class="comment">-- Table of Systems to whether or not they are active.
+</span>        activeSystems = {},
+
+        <span class="comment">-- Table of Systems to System Indices
+</span>        systemIndices = {},
+
+        <span class="comment">-- Table of Systems to Sets of matching Entities
+</span>        systemEntities = {},
+
+        <span class="comment">-- List of Systems to add next update
+</span>        systemsToAdd = {},
+
+        <span class="comment">-- List of Systems to remove next update
+</span>        systemsToRemove = {}
+
+    }
+
+    tiny.add(ret, ...)
+    tiny.manageSystems(ret)
+    tiny.manageEntities(ret)
+
+    <span class="global">setmetatable</span>(ret, worldMetaTable)
+    <span class="keyword">return</span> ret
+
+<span class="keyword">end</span>
+
+<span class="comment">--- Adds Entities and Systems to the World.
+</span><span class="comment">-- New objects will enter the World the next time World:update(dt) is called.
+</span><span class="comment">-- Also call this method when an Entity has had its Components changed, such
+</span><span class="comment">-- that it matches different Filters.
+</span><span class="comment">-- @param world
+</span><a id="169"></a><span class="comment">-- @param ... Systems and Entities
+</span><span class="keyword">function</span> tiny.add(world, ...)
+    <span class="keyword">local</span> args = {...}
+    <span class="keyword">local</span> status = world.status
+    <span class="keyword">local</span> entities = world.entities
+    <span class="keyword">local</span> systemsToAdd = world.systemsToAdd
+    <span class="keyword">for</span> _, obj <span class="keyword">in</span> <span class="global">ipairs</span>(args) <span class="keyword">do</span>
+        <span class="keyword">if</span> <span class="global">getmetatable</span>(obj) == systemMetaTable <span class="keyword">then</span>
+            tinsert(systemsToAdd, obj)
+        <span class="keyword">else</span> <span class="comment">-- Assume obj is an Entity
+</span>            entities[obj] = <span class="keyword">true</span>
+            status[obj] = <span class="string">"add"</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+tiny_add = tiny.add
+
+<span class="comment">--- Removes Entities and Systems from the World. Objects will exit the World the
+</span><span class="comment">-- next time World:update(dt) is called.
+</span><span class="comment">-- @param world
+</span><a id="189"></a><span class="comment">-- @param ... Systems and Entities
+</span><span class="keyword">function</span> tiny.remove(world, ...)
+    <span class="keyword">local</span> args = {...}
+    <span class="keyword">local</span> status = world.status
+    <span class="keyword">local</span> entities = world.entities
+    <span class="keyword">local</span> systemsToRemove = world.systemsToRemove
+    <span class="keyword">for</span> _, obj <span class="keyword">in</span> <span class="global">ipairs</span>(args) <span class="keyword">do</span>
+        <span class="keyword">if</span> <span class="global">getmetatable</span>(obj) == systemMetaTable <span class="keyword">then</span>
+            tinsert(systemsToRemove, obj)
+        <span class="keyword">elseif</span> entities[obj] <span class="keyword">then</span> <span class="comment">-- Assume obj is an Entity
+</span>            status[obj] = <span class="string">"remove"</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+tiny_remove = tiny.remove
+
+<span class="comment">--- Updates a System.
+</span><span class="comment">-- @param world
+</span><span class="comment">-- @param system A System in the World to update
+</span><a id="208"></a><span class="comment">-- @param dt Delta time
+</span><span class="keyword">function</span> tiny.updateSystem(world, system, dt)
+    <span class="keyword">local</span> callback = system.callback
+    <span class="keyword">local</span> entityCallback = system.entityCallback
+
+    <span class="keyword">if</span> callback <span class="keyword">then</span>
+        callback(dt)
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> entityCallback <span class="keyword">then</span>
+        <span class="keyword">local</span> entities = world.entities
+        <span class="keyword">local</span> es = world.systemEntities[system]
+        <span class="keyword">if</span> es <span class="keyword">then</span>
+            <span class="keyword">for</span> e <span class="keyword">in</span> <span class="global">pairs</span>(es) <span class="keyword">do</span>
+                entityCallback(e, dt)
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+tiny_updateSystem = tiny.updateSystem
+
+<span class="comment">--- Adds and removes Systems that have been marked from the World.
+</span><span class="comment">-- The user of this library should seldom if ever call this.
+</span><a id="231"></a><span class="comment">-- @param world
+</span><span class="keyword">function</span> tiny.manageSystems(world)
+
+        <span class="keyword">local</span> systemEntities = world.systemEntities
+        <span class="keyword">local</span> systemIndices = world.systemIndices
+        <span class="keyword">local</span> entities = world.entities
+        <span class="keyword">local</span> systems = world.systems
+        <span class="keyword">local</span> systemsToAdd = world.systemsToAdd
+        <span class="keyword">local</span> systemsToRemove = world.systemsToRemove
+        <span class="keyword">local</span> activeSystems = world.activeSystems
+
+        <span class="comment">-- Keep track of the number of Systems in the world
+</span>        <span class="keyword">local</span> deltaSystemCount = <span class="number">0</span>
+
+        <span class="comment">-- Remove all Systems queued for removal
+</span>        <span class="keyword">for</span> i = <span class="number">1</span>, #systemsToRemove <span class="keyword">do</span>
+            <span class="comment">-- Pop system off the remove queue
+</span>            <span class="keyword">local</span> sys = systemsToRemove[i]
+            systemsToRemove[i] = <span class="keyword">nil</span>
+
+            <span class="keyword">local</span> sysID = systemIndices[sys]
+            <span class="keyword">if</span> sysID <span class="keyword">then</span>
+                tremove(systems, sysID)
+
+                <span class="keyword">local</span> onRemove = sys.onRemove
+                <span class="keyword">if</span> onRemove <span class="keyword">then</span>
+                    <span class="keyword">for</span> e <span class="keyword">in</span> <span class="global">pairs</span>(systemEntities[sys]) <span class="keyword">do</span>
+                        onRemove(e)
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+
+                systemEntities[sys] = <span class="keyword">nil</span>
+                activeSystems[sys] = <span class="keyword">nil</span>
+                deltaSystemCount = deltaSystemCount - <span class="number">1</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="comment">-- Add Systems queued for addition
+</span>        <span class="keyword">for</span> i = <span class="number">1</span>, #systemsToAdd <span class="keyword">do</span>
+            <span class="comment">-- Pop system off the add queue
+</span>            <span class="keyword">local</span> sys = systemsToAdd[i]
+            systemsToAdd[i] = <span class="keyword">nil</span>
+
+            <span class="comment">-- Add system to world
+</span>            <span class="keyword">local</span> es = {}
+            systemEntities[sys] = es
+            tinsert(systems, sys)
+            systemIndices[sys] = #systems
+            activeSystems[sys] = <span class="keyword">true</span>
+
+            <span class="keyword">local</span> filter = sys.filter
+            <span class="keyword">if</span> filter <span class="keyword">then</span>
+                <span class="keyword">for</span> e <span class="keyword">in</span> <span class="global">pairs</span>(entities) <span class="keyword">do</span>
+                    es[e] = filter(e) <span class="keyword">and</span> <span class="keyword">true</span> <span class="keyword">or</span> <span class="keyword">nil</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            deltaSystemCount = deltaSystemCount + <span class="number">1</span>
+        <span class="keyword">end</span>
+
+        <span class="comment">-- Update the number of Systems in the World
+</span>        world.systemCount = world.systemCount + deltaSystemCount
+<span class="keyword">end</span>
+tiny_manageSystems = tiny.manageSystems
+
+<span class="comment">--- Adds and removes Entities that have been marked.
+</span><span class="comment">-- The user of this library should seldom if ever call this.
+</span><a id="298"></a><span class="comment">-- @param world
+</span><span class="keyword">function</span> tiny.manageEntities(world)
+
+    <span class="keyword">local</span> statuses = world.status
+    <span class="keyword">local</span> systemEntities = world.systemEntities
+    <span class="keyword">local</span> entities = world.entities
+    <span class="keyword">local</span> systems = world.systems
+
+    <span class="comment">-- Keep track of the number of Entities in the World
+</span>    <span class="keyword">local</span> deltaEntityCount = <span class="number">0</span>
+
+    <span class="comment">-- Add, remove, or change Entities
+</span>    <span class="keyword">for</span> e, s <span class="keyword">in</span> <span class="global">pairs</span>(statuses) <span class="keyword">do</span>
+        <span class="keyword">if</span> s == <span class="string">"add"</span> <span class="keyword">then</span>
+            deltaEntityCount = deltaEntityCount + <span class="number">1</span>
+            <span class="keyword">for</span> sys, es <span class="keyword">in</span> <span class="global">pairs</span>(systemEntities) <span class="keyword">do</span>
+                <span class="keyword">local</span> filter = sys.filter
+                <span class="keyword">if</span> filter <span class="keyword">then</span>
+                    <span class="keyword">local</span> matches = filter(e) <span class="keyword">and</span> <span class="keyword">true</span> <span class="keyword">or</span> <span class="keyword">nil</span>
+                    <span class="keyword">local</span> onAdd = sys.onAdd
+                    <span class="keyword">if</span> onAdd <span class="keyword">and</span> matches <span class="keyword">and</span> <span class="keyword">not</span> es[e] <span class="keyword">then</span>
+                        onAdd(e)
+                    <span class="keyword">end</span>
+                    es[e] = matches
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">elseif</span> s == <span class="string">"remove"</span> <span class="keyword">then</span>
+            deltaEntityCount = deltaEntityCount - <span class="number">1</span>
+            entities[e] = <span class="keyword">nil</span>
+            <span class="keyword">for</span> sys, es <span class="keyword">in</span> <span class="global">pairs</span>(systemEntities) <span class="keyword">do</span>
+                <span class="keyword">local</span> onRemove = sys.onRemove
+                <span class="keyword">if</span> es[e] <span class="keyword">and</span> onRemove <span class="keyword">then</span>
+                    onRemove(e)
+                <span class="keyword">end</span>
+                es[e] = <span class="keyword">nil</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        statuses[e] = <span class="keyword">nil</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">-- Update Entity count
+</span>    world.entityCount = world.entityCount + deltaEntityCount
+
+<span class="keyword">end</span>
+tiny_manageEntities = tiny.manageEntities
+
+<span class="comment">--- Updates the World.
+</span><span class="comment">-- Frees Entities that have been marked for freeing, adds
+</span><span class="comment">-- entities that have been marked for adding, etc.
+</span><span class="comment">-- @param world
+</span><a id="348"></a><span class="comment">-- @param dt Delta time
+</span><span class="keyword">function</span> tiny.update(world, dt)
+
+    tiny_manageSystems(world)
+    tiny_manageEntities(world)
+
+    <span class="comment">--  Iterate through Systems IN ORDER
+</span>    <span class="keyword">for</span> _, s <span class="keyword">in</span> <span class="global">ipairs</span>(world.systems) <span class="keyword">do</span>
+        <span class="keyword">if</span> world.activeSystems[s] <span class="keyword">then</span>
+            tiny_updateSystem(world, s, dt)
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">--- Removes all Entities from the World.
+</span><span class="comment">-- When World:update(dt) is next called,
+</span><span class="comment">-- all Entities will be removed.
+</span><a id="365"></a><span class="comment">-- @param world
+</span><span class="keyword">function</span> tiny.clearEntities(world)
+    <span class="keyword">local</span> status = world.status
+    <span class="keyword">for</span> e <span class="keyword">in</span> <span class="global">pairs</span>(world.entities) <span class="keyword">do</span>
+        status[e] = <span class="string">"remove"</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">--- Removes all Systems from the World.
+</span><span class="comment">-- When World:update(dt) is next called,
+</span><span class="comment">-- all Systems will be removed.
+</span><a id="376"></a><span class="comment">-- @param world
+</span><span class="keyword">function</span> tiny.clearSystems(world)
+    <span class="keyword">local</span> newSystemsToRemove = {}
+    <span class="keyword">local</span> systems = world.systems
+    <span class="keyword">for</span> i = <span class="number">1</span>, #systems <span class="keyword">do</span>
+        newSystemsToRemove[i] = systems[i]
+    <span class="keyword">end</span>
+    world.systemsToRemove = newSystemsToRemove
+<span class="keyword">end</span>
+
+<span class="comment">--- Sets if a System is active in a world. If the system is active, it will
+</span><span class="comment">-- update automatically when World:update(dt) is called. Otherwise, the user
+</span><span class="comment">-- must call World:updateSystem(system, dt) to update the unactivated system.
+</span><span class="comment">-- @param world
+</span><span class="comment">-- @param system A System in the World activate/deactivate
+</span><a id="391"></a><span class="comment">-- @param active Boolean new state of the System
+</span><span class="keyword">function</span> tiny.setSystemActive(world, system, active)
+    world.activeSystem[system] = active <span class="keyword">and</span> <span class="keyword">true</span> <span class="keyword">or</span> <span class="keyword">nil</span>
+<span class="keyword">end</span>
+
+<span class="keyword">return</span> tiny</pre>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-03-29 20:35:35 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
