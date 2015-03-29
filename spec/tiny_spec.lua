@@ -97,7 +97,7 @@ describe('tiny-ecs:', function()
         )
 
         local timePassed = 0
-        local oneTimeSystem = tiny.emptySystem(
+        local oneTimeSystem = tiny.system(
             function(dt)
                 timePassed = timePassed + dt
             end
@@ -107,7 +107,7 @@ describe('tiny-ecs:', function()
             entity1 = deep_copy(entityTemplate1)
             entity2 = deep_copy(entityTemplate2)
             entity3 = deep_copy(entityTemplate3)
-            world = tiny.newWorld(moveSystem, oneTimeSystem, entity1, entity2, entity3)
+            world = tiny.world(moveSystem, oneTimeSystem, entity1, entity2, entity3)
             timePassed = 0
         end)
 

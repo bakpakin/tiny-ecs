@@ -53,7 +53,7 @@ local joe = {
     hairColor = "brown"
 }
 
-local world = tiny.newWorld(talkingSystem, joe)
+local world = tiny.world(talkingSystem, joe)
 
 for i = 1, 20 do
     world:update(1)
@@ -64,10 +64,14 @@ end
 Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
 `busted` from the command line to test.
 
+## Documentation ##
+See API [here](http://bakpakin.github.io/tiny-ecs/).
+Documentation can be generated locally with [LDoc](http://stevedonovan.github.io/ldoc/).
+
 ## TODO ##
 
 * Dynamic reordering of Systems
 * More testing
 * Performance testing / optimization
-* API outside of source code
+* Improve Documentation
 * Add more complete examples

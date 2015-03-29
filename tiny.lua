@@ -1,8 +1,10 @@
-local tiny = {
-    _VERSION = "0.2.0",
-    _URL = "https://github.com/bakpakin/tiny-ecs",
-    _DESCRIPTION = "tiny-ecs - Entity Component System for lua."
-}
+--- @module tiny-ecs
+-- @author Calvin Rose
+local tiny = {}
+
+--- Tiny-ecs Version, a period-separated three number string like "1.2.3" with
+-- no leading zeros.
+tiny._VERSION = "0.3.0"
 
 local tinsert = table.insert
 local tremove = table.remove
@@ -12,107 +14,165 @@ local ipairs = ipairs
 local setmetatable = setmetatable
 local getmetatable = getmetatable
 
--- Simple class implementation with no inheritance or polymorphism.
-local function class()
-    local c = {}
-    local mt = {}
-    setmetatable(c, mt)
-    c.__index = c
-    function mt.__call(_, ...)
-        local newobj = {}
-        setmetatable(newobj, c)
-        if c.init then
-            c.init(newobj, ...)
+-- Local versions of the library functions
+local tiny_system
+local tiny_manageEntities
+local tiny_manageSystems
+local tiny_updateSystem
+local tiny_add
+local tiny_remove
+
+--- Filter functions.
+-- A Filter is a function that selects which Entities apply to a System.
+-- @section Filter
+
+--- Makes a Filter that filters Entities with specified Components.
+-- An Entity must have all Components to match the filter.
+-- @param ... List of Components
+function tiny.requireAll(...)
+    local components = {...}
+    local len = #components
+    return function(e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if e[c] == nil then
+                return false
+            end
         end
-        return newobj
+        return true
     end
-    return c
 end
 
--- --- System --- --
-local System = class()
-
--- Initializes a System.
-function System:init(preupdate, filter, update, add, remove)
-    self.preupdate = preupdate
-    self.update = update
-    self.filter = filter
-    self.add = add
-    self.remove = remove
+--- Makes a Filter that filters Entities with specified Components.
+-- An Entity must have at least one specified Component to match the filter.
+-- @param ... List of Components
+function tiny.requireOne(...)
+    local components = {...}
+    local len = #components
+    return function(e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if e[c] ~= nil then
+                return true
+            end
+        end
+        return false
+    end
 end
 
-function System:__tostring()
-    return "TinySystem<preupdate: " ..
-    self.preupdate ..
-    ", update: " ..
-    self.update ..
-    ", filter: " ..
-    self.filter ..
-    ">"
+--- System functions.
+-- A System a wrapper around function callbacks for manipulating Entities.
+-- @section System
+
+local systemMetaTable = {}
+
+--- Creates a System.
+-- @param callback Function of one argument, delta time, that is called once
+-- per world update
+-- @param filter Function of one argument, an Entity, that returns a boolean
+-- @param entityCallback Function of two arguments, an Entity and delta time
+-- @param onAdd Optional callback for when Enities are added to the System that
+-- takes one argument, an Entity
+-- @param onRemove Similar to onAdd, but is instead called when an Entity is
+-- removed from the System
+function tiny.system(callback, filter, entityCallback, onAdd, onRemove)
+    local ret = {
+        callback = callback,
+        filter = filter,
+        entityCallback = entityCallback,
+        onAdd = onAdd,
+        onRemove = onRemove
+    }
+    setmetatable(ret, systemMetaTable)
+    return ret
+end
+tiny_system = tiny.system
+
+--- Creates a System that processes Entities every update. Also provides
+-- optional callbacks for when Entities are added or removed from the System.
+-- @param filter Function of one argument, an Entity, that returns a boolean
+-- @param entityCallback Function of two arguments, an Entity and delta time
+-- @param onAdd Optional callback for when Entities are added to the System that
+-- takes one argument, an Entity
+-- @param onRemove Similar to onAdd, but is instead called when an Entity is
+-- removed from the System
+function tiny.processingSystem(filter, entityCallback, onAdd, onRemove)
+    return tiny_system(nil, filter, entityCallback, onAdd, onRemove)
 end
 
--- --- World --- --
-local World = class()
+local worldMetaTable = { __index = tiny }
 
--- Initializes a World.
-function World:init(...)
+--- World functions.
+-- A World is a container that manages Entities and Systems. The tiny-ecs module
+-- is set to be the `__index` of all World tables, so the often clearer syntax of
+-- World:method can be used for any function in the library. For example,
+-- `tiny.add(world, e1, e2, e3)` is the same as `world:add(e1, e2, e3).`
+-- @section World
 
-    -- Table of Entities to status
-    self.status = {}
+--- Creates a new World.
+-- Can optionally add default Systems and Entities.
+-- @param ... Systems and Entities to add to the World
+-- @return A new World
+function tiny.world(...)
 
-    -- Set of Entities
-    self.entities = {}
+    local ret = {
 
-    -- Number of Entities in World.
-    self.entityCount = 0
+        -- Table of Entities to status
+        status = {},
 
-    -- Number of Systems in World.
-    self.systemCount = 0
+        -- Set of Entities
+        entities = {},
 
-    -- List of Systems
-    self.systems = {}
+        -- Number of Entities in World.
+        entityCount = 0,
 
-    -- Table of Systems to whether or not they are active.
-    self.activeSystems = {}
+        -- Number of Systems in World.
+        systemCount = 0,
 
-    -- Table of Systems to System Indices
-    self.systemIndices = {}
+        -- List of Systems
+        systems = {},
 
-    -- Table of Systems to Sets of matching Entities
-    self.systemEntities = {}
+        -- Table of Systems to whether or not they are active.
+        activeSystems = {},
 
-    -- List of Systems to add next update
-    self.systemsToAdd = {}
+        -- Table of Systems to System Indices
+        systemIndices = {},
 
-    -- List of Systems to remove next update
-    self.systemsToRemove = {}
+        -- Table of Systems to Sets of matching Entities
+        systemEntities = {},
 
-    -- Add Systems and Entities
-    self:add(...)
-    self:manageSystems()
-    self:manageEntities()
+        -- List of Systems to add next update
+        systemsToAdd = {},
+
+        -- List of Systems to remove next update
+        systemsToRemove = {}
+
+    }
+
+    tiny.add(ret, ...)
+    tiny.manageSystems(ret)
+    tiny.manageEntities(ret)
+
+    setmetatable(ret, worldMetaTable)
+    return ret
+
 end
 
-function World:__tostring()
-    return "TinyWorld<systemCount: " ..
-    self.systemCount ..
-    ", entityCount: " ..
-    self.entityCount ..
-    ">"
-end
-
--- World:add(...)
-
--- Adds Entities and Systems to the World. New objects will enter the World the
--- next time World:update(dt) is called. Also call this method when an Entity
--- has had its Components changed, such that it matches different Filters.
-function World:add(...)
+--- Adds Entities and Systems to the World.
+-- New objects will enter the World the next time World:update(dt) is called.
+-- Also call this method when an Entity has had its Components changed, such
+-- that it matches different Filters.
+-- @param world
+-- @param ... Systems and Entities
+function tiny.add(world, ...)
     local args = {...}
-    local status = self.status
-    local entities = self.entities
-    local systemsToAdd = self.systemsToAdd
+    local status = world.status
+    local entities = world.entities
+    local systemsToAdd = world.systemsToAdd
     for _, obj in ipairs(args) do
-        if getmetatable(obj) == System then
+        if getmetatable(obj) == systemMetaTable then
             tinsert(systemsToAdd, obj)
         else -- Assume obj is an Entity
             entities[obj] = true
@@ -120,60 +180,63 @@ function World:add(...)
         end
     end
 end
+tiny_add = tiny.add
 
--- World:free(...)
-
--- Removes Entities and Systems from the World. Objects will exit the World the
+--- Removes Entities and Systems from the World. Objects will exit the World the
 -- next time World:update(dt) is called.
-function World:remove(...)
+-- @param world
+-- @param ... Systems and Entities
+function tiny.remove(world, ...)
     local args = {...}
-    local status = self.status
-    local entities = self.entities
-    local systemsToRemove = self.systemsToRemove
+    local status = world.status
+    local entities = world.entities
+    local systemsToRemove = world.systemsToRemove
     for _, obj in ipairs(args) do
-        if getmetatable(obj) == System then
+        if getmetatable(obj) == systemMetaTable then
             tinsert(systemsToRemove, obj)
         elseif entities[obj] then -- Assume obj is an Entity
             status[obj] = "remove"
         end
     end
 end
+tiny_remove = tiny.remove
 
--- World:updateSystem(system, dt)
+--- Updates a System.
+-- @param world
+-- @param system A System in the World to update
+-- @param dt Delta time
+function tiny.updateSystem(world, system, dt)
+    local callback = system.callback
+    local entityCallback = system.entityCallback
 
--- Updates a System
-function World:updateSystem(system, dt)
-    local preupdate = system.preupdate
-    local update = system.update
-
-    if preupdate then
-        preupdate(dt)
+    if callback then
+        callback(dt)
     end
 
-    if update then
-        local entities = self.entities
-        local es = self.systemEntities[system]
+    if entityCallback then
+        local entities = world.entities
+        local es = world.systemEntities[system]
         if es then
             for e in pairs(es) do
-                update(e, dt)
+                entityCallback(e, dt)
             end
         end
     end
 end
+tiny_updateSystem = tiny.updateSystem
 
--- World:manageSystems()
+--- Adds and removes Systems that have been marked from the World.
+-- The user of this library should seldom if ever call this.
+-- @param world
+function tiny.manageSystems(world)
 
--- Adds and removes Systems that have been marked from the world. The user of
--- this library should seldom if ever call this.
-function World:manageSystems()
-
-        local systemEntities = self.systemEntities
-        local systemIndices = self.systemIndices
-        local entities = self.entities
-        local systems = self.systems
-        local systemsToAdd = self.systemsToAdd
-        local systemsToRemove = self.systemsToRemove
-        local activeSystems = self.activeSystems
+        local systemEntities = world.systemEntities
+        local systemIndices = world.systemIndices
+        local entities = world.entities
+        local systems = world.systems
+        local systemsToAdd = world.systemsToAdd
+        local systemsToRemove = world.systemsToRemove
+        local activeSystems = world.activeSystems
 
         -- Keep track of the number of Systems in the world
         local deltaSystemCount = 0
@@ -188,10 +251,10 @@ function World:manageSystems()
             if sysID then
                 tremove(systems, sysID)
 
-                local removeCallback = sys.remove
-                if removeCallback then -- call 'remove' on all entities in the System
+                local onRemove = sys.onRemove
+                if onRemove then
                     for e in pairs(systemEntities[sys]) do
-                        removeCallback(e)
+                        onRemove(e)
                     end
                 end
 
@@ -214,10 +277,10 @@ function World:manageSystems()
             systemIndices[sys] = #systems
             activeSystems[sys] = true
 
-            local a = sys.filter
-            if a then
+            local filter = sys.filter
+            if filter then
                 for e in pairs(entities) do
-                    es[e] = a(e) and true or nil
+                    es[e] = filter(e) and true or nil
                 end
             end
 
@@ -225,19 +288,19 @@ function World:manageSystems()
         end
 
         -- Update the number of Systems in the World
-        self.systemCount = self.systemCount + deltaSystemCount
+        world.systemCount = world.systemCount + deltaSystemCount
 end
+tiny_manageSystems = tiny.manageSystems
 
--- World:manageEntities()
+--- Adds and removes Entities that have been marked.
+-- The user of this library should seldom if ever call this.
+-- @param world
+function tiny.manageEntities(world)
 
--- Adds and removes Entities that have been marked. The user of this library
--- should seldom if ever call this.
-function World:manageEntities()
-
-    local statuses = self.status
-    local systemEntities = self.systemEntities
-    local entities = self.entities
-    local systems = self.systems
+    local statuses = world.status
+    local systemEntities = world.systemEntities
+    local entities = world.entities
+    local systems = world.systems
 
     -- Keep track of the number of Entities in the World
     local deltaEntityCount = 0
@@ -250,9 +313,9 @@ function World:manageEntities()
                 local filter = sys.filter
                 if filter then
                     local matches = filter(e) and true or nil
-                    local addCallback = sys.add
-                    if addCallback and matches and not es[e] then
-                        addCallback(e)
+                    local onAdd = sys.onAdd
+                    if onAdd and matches and not es[e] then
+                        onAdd(e)
                     end
                     es[e] = matches
                 end
@@ -261,9 +324,9 @@ function World:manageEntities()
             deltaEntityCount = deltaEntityCount - 1
             entities[e] = nil
             for sys, es in pairs(systemEntities) do
-                local removec = sys.remove
-                if es[e] and removec then
-                    removec(e)
+                local onRemove = sys.onRemove
+                if es[e] and onRemove then
+                    onRemove(e)
                 end
                 es[e] = nil
             end
@@ -272,116 +335,61 @@ function World:manageEntities()
     end
 
     -- Update Entity count
-    self.entityCount = self.entityCount + deltaEntityCount
+    world.entityCount = world.entityCount + deltaEntityCount
 
 end
+tiny_manageEntities = tiny.manageEntities
 
--- World:update()
-
--- Updates the World, frees Entities that have been marked for freeing, adds
+--- Updates the World.
+-- Frees Entities that have been marked for freeing, adds
 -- entities that have been marked for adding, etc.
-function World:update(dt)
+-- @param world
+-- @param dt Delta time
+function tiny.update(world, dt)
 
-    self:manageSystems()
-    self:manageEntities()
+    tiny_manageSystems(world)
+    tiny_manageEntities(world)
 
     --  Iterate through Systems IN ORDER
-    for _, s in ipairs(self.systems) do
-        if self.activeSystems[s] then
-            self:updateSystem(s, dt)
+    for _, s in ipairs(world.systems) do
+        if world.activeSystems[s] then
+            tiny_updateSystem(world, s, dt)
         end
     end
 end
 
--- World:clearEntities()
-
--- Removes all Entities from the World. When World:update(dt) is next called,
+--- Removes all Entities from the World.
+-- When World:update(dt) is next called,
 -- all Entities will be removed.
-function World:clearEntities()
-    local status = self.status
-    for e in pairs(self.entities) do
+-- @param world
+function tiny.clearEntities(world)
+    local status = world.status
+    for e in pairs(world.entities) do
         status[e] = "remove"
     end
 end
 
--- World:clearSystems()
-
--- Removes all Systems from the World. When World:update(dt) is next called,
+--- Removes all Systems from the World.
+-- When World:update(dt) is next called,
 -- all Systems will be removed.
-function World:clearSystems()
+-- @param world
+function tiny.clearSystems(world)
     local newSystemsToRemove = {}
-    local systems = self.systems
+    local systems = world.systems
     for i = 1, #systems do
         newSystemsToRemove[i] = systems[i]
     end
-    self.systemsToRemove = newSystemsToRemove
+    world.systemsToRemove = newSystemsToRemove
 end
 
--- World:setSystemActive(system, active)
-
--- Sets if a System is active in a world. If the system is active, it will
+--- Sets if a System is active in a world. If the system is active, it will
 -- update automatically when World:update(dt) is called. Otherwise, the user
 -- must call World:updateSystem(system, dt) to update the unactivated system.
-function World:setSystemActive(system, active)
-    self.activeSystem[system] = active and true or nil
-end
-
--- --- Top Level module functions --- --
-
---- Creates a new tiny-ecs World.
-function tiny.newWorld(...)
-    return World(...)
-end
-
---- Makes a Filter that filters Entities with specified Components.
--- An Entity must have all Components to match the filter.
-function tiny.requireAll(...)
-    local components = {...}
-    local len = #components
-    return function(e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if e[c] == nil then
-                return false
-            end
-        end
-        return true
-    end
-end
-
---- Makes a Filter that filters Entities with specified Components.
--- An Entity must have at least one specified Component to match the filter.
-function tiny.requireOne(...)
-    local components = {...}
-    local len = #components
-    return function(e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if e[c] ~= nil then
-                return true
-            end
-        end
-        return false
-    end
-end
-
---- Creates a System that doesn't update any Entities, but executes a callback
--- once per update.
-function tiny.emptySystem(callback)
-    return System(callback)
-end
-
---- Creates a System that processes Entities every update. Also provides
--- optional callbacks for when Entities are added or removed from the System.
-function tiny.processingSystem(filter, entityCallback, onAdd, onRemove)
-    return System(nil, filter, entityCallback, onAdd, onRemove)
-end
-
---- Creates a System.
-function tiny.system(callback, filter, entityCallback, onAdd, onRemove)
-    return System(callback, filter, entityCallback, onAdd, onRemove)
+-- @param world
+-- @param system A System in the World activate/deactivate
+-- @param active Boolean new state of the System
+function tiny.setSystemActive(world, system, active)
+    world.activeSystem[system] = active and true or nil
 end
 
 return tiny
