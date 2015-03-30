@@ -389,7 +389,7 @@ end
 -- @param system A System in the World activate/deactivate
 -- @param active Boolean new state of the System
 function tiny.setSystemActive(world, system, active)
-    world.activeSystem[system] = active and true or nil
+    world.activeSystems[system] = active and true or nil
 end
 
 return tiny
