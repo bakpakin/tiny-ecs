@@ -58,8 +58,7 @@
 <table class="function_list">
 	<tr>
 	<td class="name" nowrap><a href="#tiny._VERSION">tiny._VERSION</a></td>
-	<td class="summary">Tiny-ecs Version, a period-separated three number string like "1.2.3" with
- no leading zeros.</td>
+	<td class="summary">Tiny-ecs Version, a period-separated three number string like "1.2.3"</td>
 	</tr>
 </table>
 <h2><a href="#Filter_functions">Filter functions </a></h2>
@@ -87,6 +86,10 @@
 <h2><a href="#World_functions">World functions </a></h2>
 <table class="function_list">
 	<tr>
+	<td class="name" nowrap><a href="#tiny.activate">tiny.activate (world, ...)</a></td>
+	<td class="summary">Activates Systems in the World.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#tiny.add">tiny.add (world, ...)</a></td>
 	<td class="summary">Adds Entities and Systems to the World.</td>
 	</tr>
@@ -99,6 +102,18 @@
 	<td class="summary">Removes all Systems from the World.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#tiny.deactivate">tiny.deactivate (world, ...)</a></td>
+	<td class="summary">Deactivates Systems in the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.getEntityCount">tiny.getEntityCount (world)</a></td>
+	<td class="summary">Gets count of Entities in World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.getSystemCount">tiny.getSystemCount (world)</a></td>
+	<td class="summary">Gets count of Systems in World.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#tiny.manageEntities">tiny.manageEntities (world)</a></td>
 	<td class="summary">Adds and removes Entities that have been marked.</td>
 	</tr>
@@ -109,10 +124,6 @@
 	<tr>
 	<td class="name" nowrap><a href="#tiny.remove">tiny.remove (world, ...)</a></td>
 	<td class="summary">Removes Entities and Systems from the World.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#tiny.setSystemActive">tiny.setSystemActive (world, system, active)</a></td>
-	<td class="summary">Sets if a System is active in a world.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.update">tiny.update (world, dt)</a></td>
@@ -140,8 +151,7 @@
     <strong>tiny._VERSION</strong>
     </dt>
     <dd>
-    Tiny-ecs Version, a period-separated three number string like "1.2.3" with
- no leading zeros.
+    Tiny-ecs Version, a period-separated three number string like "1.2.3"
 
 
 
@@ -281,6 +291,31 @@
  <code>tiny.add(world, e1, e2, e3)</code> is the same as <code>world:add(e1, e2, e3).</code>
     <dl class="function">
     <dt>
+    <a name = "tiny.activate"></a>
+    <strong>tiny.activate (world, ...)</strong>
+    </dt>
+    <dd>
+    Activates Systems in the World.
+ Activated Systems will be update whenever tiny.update(world, dt) is called.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">...</span>
+         Systems to activate. The Systems must already be added to the
+ World.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "tiny.add"></a>
     <strong>tiny.add (world, ...)</strong>
     </dt>
@@ -336,6 +371,73 @@
     Removes all Systems from the World.
  When World:update(dt) is next called,
  all Systems will be removed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.deactivate"></a>
+    <strong>tiny.deactivate (world, ...)</strong>
+    </dt>
+    <dd>
+    Deactivates Systems in the World.
+ Deactivated Systems must be update manually, and will not update when the
+ rest of World updates. They will, however, process new Entities added while
+ the System is deactivated.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">...</span>
+         Systems to deactivate. The Systems must already be added to the
+ World.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.getEntityCount"></a>
+    <strong>tiny.getEntityCount (world)</strong>
+    </dt>
+    <dd>
+    Gets count of Entities in World.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.getSystemCount"></a>
+    <strong>tiny.getSystemCount (world)</strong>
+    </dt>
+    <dd>
+    Gets count of Systems in World.
 
 
     <h3>Parameters:</h3>
@@ -408,34 +510,6 @@
         </li>
         <li><span class="parameter">...</span>
          Systems and Entities
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "tiny.setSystemActive"></a>
-    <strong>tiny.setSystemActive (world, system, active)</strong>
-    </dt>
-    <dd>
-    Sets if a System is active in a world.  If the system is active, it will
- update automatically when World:update(dt) is called. Otherwise, the user
- must call World:updateSystem(system, dt) to update the unactivated system.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">world</span>
-
-        </li>
-        <li><span class="parameter">system</span>
-         A System in the World activate/deactivate
-        </li>
-        <li><span class="parameter">active</span>
-         Boolean new state of the System
         </li>
     </ul>
 
@@ -528,7 +602,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-03-29 20:36:32 </i>
+<i style="float:right;">Last updated 2015-03-31 19:59:57 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
