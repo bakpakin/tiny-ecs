@@ -151,7 +151,20 @@ describe('tiny-ecs:', function()
             assert.equals(timePassed, 1)
             assert.are_not.equal(entity1.xform.x, entityTemplate1.xform.x)
         end)
-        
+
+        it("Clear Entities", function()
+            world:clearEntities()
+            world:update(1)
+            assert.equals(0, world.getEntityCount())
+        end)
+
+        it("Clear Systems", function()
+            world:clearSystems()
+            world:update(1)
+            assert.equals(0, world.getSystemCount())
+        end)
+
+
     end)
 
 end)

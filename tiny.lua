@@ -382,6 +382,18 @@ function tiny.clearSystems(world)
     world.systemsToRemove = newSystemsToRemove
 end
 
+--- Gets count of Entities in World.
+-- @param world
+function tiny.getEntityCount(world)
+    return world.entityCount
+end
+
+--- Gets count of Systems in World.
+-- @param world
+function tiny.getSystemsCount(world)
+    return world.systemCount
+end
+
 --- Sets if a System is active in a world. If the system is active, it will
 -- update automatically when World:update(dt) is called. Otherwise, the user
 -- must call World:updateSystem(system, dt) to update the unactivated system.
