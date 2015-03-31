@@ -2,8 +2,7 @@
 -- @author Calvin Rose
 local tiny = {}
 
---- Tiny-ecs Version, a period-separated three number string like "1.2.3" with
--- no leading zeros.
+--- Tiny-ecs Version, a period-separated three number string like "1.2.3"
 tiny._VERSION = "0.3.0"
 
 local tinsert = table.insert
@@ -120,9 +119,14 @@ function tiny.world(...)
     local ret = {
 
         -- Table of Entities to status
-        status = {},
+        -- Statuses: remove, add
+        entityStatus = {},
 
-        -- Set of Entities
+        -- Table of Systems to status
+        -- Statuses: remove, add
+        systemStatus = {},
+
+        -- Set of Entities -- active are true, inactive are false
         entities = {},
 
         -- Number of Entities in World.
@@ -141,14 +145,7 @@ function tiny.world(...)
         systemIndices = {},
 
         -- Table of Systems to Sets of matching Entities
-        systemEntities = {},
-
-        -- List of Systems to add next update
-        systemsToAdd = {},
-
-        -- List of Systems to remove next update
-        systemsToRemove = {}
-
+        systemEntities = {}
     }
 
     tiny.add(ret, ...)
@@ -168,15 +165,13 @@ end
 -- @param ... Systems and Entities
 function tiny.add(world, ...)
     local args = {...}
-    local status = world.status
-    local entities = world.entities
-    local systemsToAdd = world.systemsToAdd
+    local entityStatus = world.entityStatus
+    local systemStatus = world.systemStatus
     for _, obj in ipairs(args) do
         if getmetatable(obj) == systemMetaTable then
-            tinsert(systemsToAdd, obj)
+            systemStatus[obj] = "add"
         else -- Assume obj is an Entity
-            entities[obj] = true
-            status[obj] = "add"
+            entityStatus[obj] = "add"
         end
     end
 end
@@ -188,14 +183,13 @@ tiny_add = tiny.add
 -- @param ... Systems and Entities
 function tiny.remove(world, ...)
     local args = {...}
-    local status = world.status
-    local entities = world.entities
-    local systemsToRemove = world.systemsToRemove
+    local entityStatus = world.entityStatus
+    local systemStatus = world.systemStatus
     for _, obj in ipairs(args) do
         if getmetatable(obj) == systemMetaTable then
-            tinsert(systemsToRemove, obj)
-        elseif entities[obj] then -- Assume obj is an Entity
-            status[obj] = "remove"
+            systemStatus[obj] = "remove"
+        else -- Assume obj is an Entity
+            entityStatus[obj] = "remove"
         end
     end
 end
@@ -234,57 +228,42 @@ function tiny.manageSystems(world)
         local systemIndices = world.systemIndices
         local entities = world.entities
         local systems = world.systems
-        local systemsToAdd = world.systemsToAdd
-        local systemsToRemove = world.systemsToRemove
+        local systemStatus = world.systemStatus
         local activeSystems = world.activeSystems
 
         -- Keep track of the number of Systems in the world
         local deltaSystemCount = 0
 
-        -- Remove all Systems queued for removal
-        for i = 1, #systemsToRemove do
-            -- Pop system off the remove queue
-            local sys = systemsToRemove[i]
-            systemsToRemove[i] = nil
+        for system, status in pairs(systemStatus) do
 
-            local sysID = systemIndices[sys]
-            if sysID then
-                tremove(systems, sysID)
-
-                local onRemove = sys.onRemove
+            if status == "add" then
+                local es = {}
+                systemEntities[system] = es
+                tinsert(systems, system)
+                systemIndices[system] = #systems
+                activeSystems[system] = true
+                local filter = system.filter
+                if filter then
+                    for e in pairs(entities) do
+                        es[e] = filter(e) and true or nil
+                    end
+                end
+                deltaSystemCount = deltaSystemCount + 1
+            elseif status == "remove" then
+                local index = systemIndices[system]
+                tremove(systems, index)
+                local onRemove = system.onRemove
                 if onRemove then
                     for e in pairs(systemEntities[sys]) do
                         onRemove(e)
                     end
                 end
-
-                systemEntities[sys] = nil
-                activeSystems[sys] = nil
+                systemEntities[system] = nil
+                activeSystems[system] = nil
                 deltaSystemCount = deltaSystemCount - 1
             end
-        end
 
-        -- Add Systems queued for addition
-        for i = 1, #systemsToAdd do
-            -- Pop system off the add queue
-            local sys = systemsToAdd[i]
-            systemsToAdd[i] = nil
-
-            -- Add system to world
-            local es = {}
-            systemEntities[sys] = es
-            tinsert(systems, sys)
-            systemIndices[sys] = #systems
-            activeSystems[sys] = true
-
-            local filter = sys.filter
-            if filter then
-                for e in pairs(entities) do
-                    es[e] = filter(e) and true or nil
-                end
-            end
-
-            deltaSystemCount = deltaSystemCount + 1
+            systemStatus[system] = nil
         end
 
         -- Update the number of Systems in the World
@@ -297,7 +276,7 @@ tiny_manageSystems = tiny.manageSystems
 -- @param world
 function tiny.manageEntities(world)
 
-    local statuses = world.status
+    local entityStatus = world.entityStatus
     local systemEntities = world.systemEntities
     local entities = world.entities
     local systems = world.systems
@@ -306,8 +285,9 @@ function tiny.manageEntities(world)
     local deltaEntityCount = 0
 
     -- Add, remove, or change Entities
-    for e, s in pairs(statuses) do
+    for e, s in pairs(entityStatus) do
         if s == "add" then
+            entities[e] = true
             deltaEntityCount = deltaEntityCount + 1
             for sys, es in pairs(systemEntities) do
                 local filter = sys.filter
@@ -321,8 +301,8 @@ function tiny.manageEntities(world)
                 end
             end
         elseif s == "remove" then
-            deltaEntityCount = deltaEntityCount - 1
             entities[e] = nil
+            deltaEntityCount = deltaEntityCount - 1
             for sys, es in pairs(systemEntities) do
                 local onRemove = sys.onRemove
                 if es[e] and onRemove then
@@ -331,7 +311,7 @@ function tiny.manageEntities(world)
                 es[e] = nil
             end
         end
-        statuses[e] = nil
+        entityStatus[e] = nil
     end
 
     -- Update Entity count
@@ -363,9 +343,9 @@ end
 -- all Entities will be removed.
 -- @param world
 function tiny.clearEntities(world)
-    local status = world.status
+    local entityStatus = world.entityStatus
     for e in pairs(world.entities) do
-        status[e] = "remove"
+        entityStatus[e] = "remove"
     end
 end
 
@@ -374,12 +354,10 @@ end
 -- all Systems will be removed.
 -- @param world
 function tiny.clearSystems(world)
-    local newSystemsToRemove = {}
-    local systems = world.systems
-    for i = 1, #systems do
-        newSystemsToRemove[i] = systems[i]
+    local systemStatus = world.systemStatus
+    for _, s in ipairs(world.systems) do
+        systemStatus[s] = "remove"
     end
-    world.systemsToRemove = newSystemsToRemove
 end
 
 --- Gets count of Entities in World.
@@ -390,18 +368,34 @@ end
 
 --- Gets count of Systems in World.
 -- @param world
-function tiny.getSystemsCount(world)
+function tiny.getSystemCount(world)
     return world.systemCount
 end
 
---- Sets if a System is active in a world. If the system is active, it will
--- update automatically when World:update(dt) is called. Otherwise, the user
--- must call World:updateSystem(system, dt) to update the unactivated system.
+--- Activates Systems in the World.
+-- Activated Systems will be update whenever tiny.update(world, dt) is called.
 -- @param world
--- @param system A System in the World activate/deactivate
--- @param active Boolean new state of the System
-function tiny.setSystemActive(world, system, active)
-    world.activeSystems[system] = active and true or nil
+-- @param ... Systems to activate. The Systems must already be added to the
+-- World.
+function tiny.activate(world, ...)
+    local args = {...}
+    for _, obj in ipairs(args) do
+        world.activeSystems[obj] = true
+    end
+end
+
+--- Deactivates Systems in the World.
+-- Deactivated Systems must be update manually, and will not update when the
+-- rest of World updates. They will, however, process new Entities added while
+-- the System is deactivated.
+-- @param world
+-- @param ... Systems to deactivate. The Systems must already be added to the
+-- World.
+function tiny.deactivate(world, ...)
+    local args = {...}
+    for _, obj in ipairs(args) do
+        world.activeSystems[obj] = nil
+    end
 end
 
 return tiny
