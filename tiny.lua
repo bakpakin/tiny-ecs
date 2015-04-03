@@ -167,9 +167,13 @@ function tiny.add(world, ...)
     local args = {...}
     local entityStatus = world.entityStatus
     local systemStatus = world.systemStatus
+    local systemIndices = world.systemIndices
+    local systemCount = world.systemCount
     for _, obj in ipairs(args) do
         if getmetatable(obj) == systemMetaTable then
             systemStatus[obj] = "add"
+            systemCount = systemCount + 1
+            systemIndices[obj] = systemCount
         else -- Assume obj is an Entity
             entityStatus[obj] = "add"
         end
@@ -239,8 +243,7 @@ function tiny.manageSystems(world)
             if status == "add" then
                 local es = {}
                 systemEntities[system] = es
-                tinsert(systems, system)
-                systemIndices[system] = #systems
+                systems[systemIndices[system]] = system
                 activeSystems[system] = true
                 local filter = system.filter
                 if filter then
