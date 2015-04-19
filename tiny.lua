@@ -12,6 +12,7 @@ local pairs = pairs
 local ipairs = ipairs
 local setmetatable = setmetatable
 local getmetatable = getmetatable
+local type = type
 
 -- Local versions of the library functions
 local tiny_system
@@ -35,7 +36,11 @@ function tiny.requireAll(...)
         local c
         for i = 1, len do
             c = components[i]
-            if e[c] == nil then
+            if type(c) == 'function' then
+                if not c(e) then
+                    return false
+                end
+            elseif e[c] == nil then
                 return false
             end
         end
@@ -53,7 +58,11 @@ function tiny.requireOne(...)
         local c
         for i = 1, len do
             c = components[i]
-            if e[c] ~= nil then
+            if type(c) == 'function' then
+                if c(e) then
+                    return true
+                end
+            elseif e[c] ~= nil then
                 return true
             end
         end
@@ -76,13 +85,16 @@ local systemMetaTable = {}
 -- takes one argument, an Entity
 -- @param onRemove Similar to onAdd, but is instead called when an Entity is
 -- removed from the System
-function tiny.system(callback, filter, entityCallback, onAdd, onRemove)
+-- @param postCallback similar to callback, but is called after Entites are
+-- processed
+function tiny.system(callback, filter, entityCallback, onAdd, onRemove, postCallback)
     local ret = {
         callback = callback,
         filter = filter,
         entityCallback = entityCallback,
         onAdd = onAdd,
-        onRemove = onRemove
+        onRemove = onRemove,
+        postCallback = postCallback
     }
     setmetatable(ret, systemMetaTable)
     return ret
@@ -97,8 +109,10 @@ tiny_system = tiny.system
 -- takes one argument, an Entity
 -- @param onRemove Similar to onAdd, but is instead called when an Entity is
 -- removed from the System
-function tiny.processingSystem(filter, entityCallback, onAdd, onRemove)
-    return tiny_system(nil, filter, entityCallback, onAdd, onRemove)
+-- @param postCallback similar to callback, but is called after Entites are
+-- processed
+function tiny.processingSystem(filter, entityCallback, onAdd, onRemove, postCallback)
+    return tiny_system(nil, filter, entityCallback, onAdd, onRemove, postCallback)
 end
 
 local worldMetaTable = { __index = tiny }
@@ -206,6 +220,7 @@ tiny_remove = tiny.remove
 function tiny.updateSystem(world, system, dt)
     local callback = system.callback
     local entityCallback = system.entityCallback
+    local postCallback = system.postCallback
 
     if callback then
         callback(dt)
@@ -220,6 +235,11 @@ function tiny.updateSystem(world, system, dt)
             end
         end
     end
+
+    if postCallback then
+        postCallback(dt)
+    end
+
 end
 tiny_updateSystem = tiny.updateSystem
 
@@ -290,8 +310,10 @@ function tiny.manageEntities(world)
     -- Add, remove, or change Entities
     for e, s in pairs(entityStatus) do
         if s == "add" then
+            if not entities[e] then
+                deltaEntityCount = deltaEntityCount + 1
+            end
             entities[e] = true
-            deltaEntityCount = deltaEntityCount + 1
             for sys, es in pairs(systemEntities) do
                 local filter = sys.filter
                 if filter then
@@ -304,8 +326,10 @@ function tiny.manageEntities(world)
                 end
             end
         elseif s == "remove" then
+            if entities[e] then
+                deltaEntityCount = deltaEntityCount - 1
+            end
             entities[e] = nil
-            deltaEntityCount = deltaEntityCount - 1
             for sys, es in pairs(systemEntities) do
                 local onRemove = sys.onRemove
                 if es[e] and onRemove then
