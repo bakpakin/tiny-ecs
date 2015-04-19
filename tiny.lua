@@ -318,6 +318,10 @@ function tiny.manageEntities(world)
                 local filter = sys.filter
                 if filter then
                     local matches = filter(e) and true or nil
+                    local onRemove = sys.onRemove
+                    if not matches and es[e] and onRemove then
+                        onRemove(e)
+                    end
                     local onAdd = sys.onAdd
                     if onAdd and matches and not es[e] then
                         onAdd(e)
