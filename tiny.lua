@@ -91,15 +91,15 @@ end
 --- Marks a table conforming to the System interface as a System recognized by
 -- tiny-ecs. Systems are tables that contain at least one field, an update 
 -- function that takes parameters like so: 
--- `function system:update(world, entities, dt)`. The `world` is the World the 
--- System belongs to, `entities` is an unordered table of Entities, 
--- with Entities as the KEYS, and `dt` is the delta time. There are also a few 
--- other optional callbacks:
--- `function system:filter(entity)` - returns a boolean
--- `function system:onAdd(entity)` - returns nil
--- `function system:onRemove(entity)` - returns nil
+-- `function system:update(world, entities, dt)`. `world` is the World the System
+-- belongs to, `entities` is an unordered table of Entities with Entities as KEYS, 
+-- and `dt` is the delta time. There are also a few other optional callbacks:
+-- `function system:filter(entity)` - returns a boolean,
+-- `function system:onAdd(entity)` - returns nil,
+-- `function system:onRemove(entity)` - returns nil.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
+-- @param table A table to be used as System, or `nil` to create a new System.
 function tiny.system(table)
     if table == nil then
         table = {}
