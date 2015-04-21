@@ -38,13 +38,14 @@ only Entities that have all required components.
 ```lua
 local tiny = require("tiny")
 
-local talkingSystem = tiny.processingSystem(
-    tiny.requireAll("name", "mass", "phrase"),
-    function (p, delta)
-        p.mass = p.mass + delta * 3
+local talkingSystem = tiny.system()
+talkingSystem.filter = tiny.requireAll("name", "mass", "phrase")
+function talkingSystem:update(world, entities, dt)
+    for p in pairs(entities) do
+        p.mass = p.mass + dt * 3
         print(p.name .. ", who weighs " .. p.mass .. " pounds, says, \"" .. p.phrase .. "\"")
     end
-)
+end
 
 local joe = {
     name = "Joe",
@@ -70,7 +71,6 @@ Documentation can be generated locally with [LDoc](http://stevedonovan.github.io
 
 ## TODO ##
 
-* Dynamic reordering of Systems
 * More testing
 * Performance testing / optimization
 * Improve Documentation

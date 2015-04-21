@@ -3,7 +3,7 @@
 local tiny = {}
 
 --- Tiny-ecs Version, a period-separated three number string like "1.2.3"
-tiny._VERSION = "0.3.0"
+tiny._VERSION = "1.0.0"
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -37,12 +37,12 @@ local tiny_remove
 function tiny.requireAll(...)
     local components = {...}
     local len = #components
-    return function(e)
+    return function(_, e)
         local c
         for i = 1, len do
             c = components[i]
             if type(c) == 'function' then
-                if not c(e) then
+                if not c(_, e) then
                     return false
                 end
             elseif e[c] == nil then
@@ -59,12 +59,12 @@ end
 function tiny.requireOne(...)
     local components = {...}
     local len = #components
-    return function(e)
+    return function(_, e)
         local c
         for i = 1, len do
             c = components[i]
             if type(c) == 'function' then
-                if c(e) then
+                if c(_, e) then
                     return true
                 end
             elseif e[c] ~= nil then
@@ -76,49 +76,38 @@ function tiny.requireOne(...)
 end
 
 --- System functions.
--- A System a wrapper around function callbacks for manipulating Entities.
+-- A System is a wrapper around function callbacks for manipulating Entities.
 -- @section System
 
-local systemMetaTable = {}
+-- Use an empty table as a key for identifying Systems. Any table that contains
+-- this key is considered a System rather than an Entity.
+local systemTableKey = {}
 
---- Creates a System.
--- @param callback Function of one argument, delta time, that is called once
--- per world update
--- @param filter Function of one argument, an Entity, that returns a boolean
--- @param entityCallback Function of two arguments, an Entity and delta time
--- @param onAdd Optional callback for when Enities are added to the System that
--- takes one argument, an Entity
--- @param onRemove Similar to onAdd, but is instead called when an Entity is
--- removed from the System
--- @param postCallback similar to callback, but is called after Entites are
--- processed
-function tiny.system(callback, filter, entityCallback, onAdd, onRemove, postCallback)
-    local ret = {
-        callback = callback,
-        filter = filter,
-        entityCallback = entityCallback,
-        onAdd = onAdd,
-        onRemove = onRemove,
-        postCallback = postCallback
-    }
-    setmetatable(ret, systemMetaTable)
-    return ret
+-- Check if tables are systems.
+local function isSystem(table)
+    return table[systemTableKey]
+end
+
+--- Marks a table conforming to the System interface as a System recognized by
+-- tiny-ecs. Systems are tables that contain at least one field, an update 
+-- function that takes parameters like so: 
+-- `function system:update(world, entities, dt)`. The `world` is the World the 
+-- System belongs to, `entities` is an unordered table of Entities, 
+-- with Entities as the KEYS, and `dt` is the delta time. There are also a few 
+-- other optional callbacks:
+-- `function system:filter(entity)` - returns a boolean
+-- `function system:onAdd(entity)` - returns nil
+-- `function system:onRemove(entity)` - returns nil
+-- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
+-- but one can write their own filters as well.
+function tiny.system(table)
+    if table == nil then
+        table = {}
+    end
+    table[systemTableKey] = true
+    return table
 end
 tiny_system = tiny.system
-
---- Creates a System that processes Entities every update. Also provides
--- optional callbacks for when Entities are added or removed from the System.
--- @param filter Function of one argument, an Entity, that returns a boolean
--- @param entityCallback Function of two arguments, an Entity and delta time
--- @param onAdd Optional callback for when Entities are added to the System that
--- takes one argument, an Entity
--- @param onRemove Similar to onAdd, but is instead called when an Entity is
--- removed from the System
--- @param postCallback similar to callback, but is called after Entites are
--- processed
-function tiny.processingSystem(filter, entityCallback, onAdd, onRemove, postCallback)
-    return tiny_system(nil, filter, entityCallback, onAdd, onRemove, postCallback)
-end
 
 local worldMetaTable = { __index = tiny }
 
@@ -167,12 +156,11 @@ function tiny.world(...)
         systemEntities = {}
     }
 
-    tiny.add(ret, ...)
-    tiny.manageSystems(ret)
-    tiny.manageEntities(ret)
+    tiny_add(ret, ...)
+    tiny_manageSystems(ret)
+    tiny_manageEntities(ret)
 
-    setmetatable(ret, worldMetaTable)
-    return ret
+    return setmetatable(ret, worldMetaTable)
 
 end
 
@@ -205,7 +193,7 @@ tiny_addSystem = tiny.addSystem
 function tiny.add(world, ...)
     local args = {...}
     for _, obj in ipairs(args) do
-        if getmetatable(obj) == systemMetaTable then
+        if isSystem(obj) then
             tiny_addSystem(world, obj)
         else -- Assume obj is an Entity
             tiny_addEntity(world, obj)
@@ -241,7 +229,7 @@ tiny_removeSystem = tiny.removeSystem
 function tiny.remove(world, ...)
     local args = {...}
     for _, obj in ipairs(args) do
-        if getmetatable(obj) == systemMetaTable then
+        if isSystem(obj) then
             tiny_removeSystem(world, obj)
         else -- Assume obj is an Entity
            tiny_removeEntity(world, obj)
@@ -255,28 +243,8 @@ tiny_remove = tiny.remove
 -- @param system A System in the World to update
 -- @param dt Delta time
 function tiny.updateSystem(world, system, dt)
-    local callback = system.callback
-    local entityCallback = system.entityCallback
-    local postCallback = system.postCallback
-
-    if callback then
-        callback(dt)
-    end
-
-    if entityCallback then
-        local entities = world.entities
-        local es = world.systemEntities[system]
-        if es then
-            for e in pairs(es) do
-                entityCallback(e, dt)
-            end
-        end
-    end
-
-    if postCallback then
-        postCallback(dt)
-    end
-
+    local es = world.systemEntities[system]
+    system:update(world, es, dt)
 end
 tiny_updateSystem = tiny.updateSystem
 
@@ -303,9 +271,14 @@ function tiny.manageSystems(world)
                 systems[systemIndices[system]] = system
                 activeSystems[system] = true
                 local filter = system.filter
+                local onAdd = system.onAdd
                 if filter then
                     for e in pairs(entities) do
-                        es[e] = filter(e) and true or nil
+                        local added = filter(system, e) and true or nil
+                        es[e] = added
+                        if added and onAdd then
+                            onAdd(system, e)
+                        end
                     end
                 end
             elseif status == "remove" then
@@ -348,17 +321,17 @@ function tiny.manageEntities(world)
                 entityCount = entityCount + 1
             end
             entities[e] = true
-            for sys, es in pairs(systemEntities) do
-                local filter = sys.filter
+            for system, es in pairs(systemEntities) do
+                local filter = system.filter
                 if filter then
-                    local matches = filter(e) and true or nil
-                    local onRemove = sys.onRemove
+                    local matches = filter(system, e) and true or nil
+                    local onRemove = system.onRemove
                     if not matches and es[e] and onRemove then
-                        onRemove(e)
+                        onRemove(system, e)
                     end
-                    local onAdd = sys.onAdd
+                    local onAdd = system.onAdd
                     if onAdd and matches and not es[e] then
-                        onAdd(e)
+                        onAdd(system, e)
                     end
                     es[e] = matches
                 end
@@ -368,10 +341,10 @@ function tiny.manageEntities(world)
                 entityCount = entityCount - 1
             end
             entities[e] = nil
-            for sys, es in pairs(systemEntities) do
-                local onRemove = sys.onRemove
+            for system, es in pairs(systemEntities) do
+                local onRemove = system.onRemove
                 if es[e] and onRemove then
-                    onRemove(e)
+                    onRemove(system, e)
                 end
                 es[e] = nil
             end
@@ -435,6 +408,28 @@ end
 -- @param world
 function tiny.getSystemCount(world)
     return world.systemCount
+end
+
+--- Gets the index of a System in the world. Lower indexed Systems are processed
+-- before higher indexed systems.
+-- @param world
+-- @param system
+function tiny.getSystemIndex(world, system)
+    return world.systemIndices[system]
+end
+
+--- Sets the index of a System in the world. Changes the order in
+-- which they Systems processed, because lower indexed Systems are processed 
+-- first.
+-- @param world
+-- @param system
+-- @param index
+function tiny.setSystemIndex(world, system, index)
+    local oldIndex = world.systemIndices[system]
+    local systems = world.systems
+    tremove(systems, oldIndex)
+    tinsert(systems, index, system)
+    world.systemIndices[system] = index
 end
 
 --- Activates Systems in the World.

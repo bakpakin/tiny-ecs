@@ -67,15 +67,15 @@ describe('tiny-ecs:', function()
             local fxform = tiny.requireAll("xform")
             local fall = tiny.requireOne("spinalTap", "onlyTen", "littleMan")
 
-            assert.truthy(fall(entity1))
-            assert.truthy(ftap(entity1))
-            assert.falsy(ftap(entity2))
-            assert.truthy(fxform(entity1))
-            assert.truthy(fxform(entity2))
+            assert.truthy(fall(nil, entity1))
+            assert.truthy(ftap(nil, entity1))
+            assert.falsy(ftap(nil, entity2))
+            assert.truthy(fxform(nil, entity1))
+            assert.truthy(fxform(nil, entity2))
 
-            assert.truthy(fall(entity1))
-            assert.truthy(fall(entity2))
-            assert.truthy(fall(entity3))
+            assert.truthy(fall(nil, entity1))
+            assert.truthy(fall(nil, entity2))
+            assert.truthy(fall(nil, entity3))
 
         end)
 
@@ -85,23 +85,23 @@ describe('tiny-ecs:', function()
 
         local world, entity1, entity2, entity3
 
-        local moveSystem = tiny.processingSystem(
-            tiny.requireAll("xform", "vel"),
-            function(e, dt)
+        local moveSystem = tiny.system()
+        moveSystem.filter = tiny.requireAll("xform", "vel")
+        function moveSystem:update(world, entities, dt)
+            for e in pairs(entities) do
                 local xform = e.xform
                 local vel = e.vel
                 local x, y = xform.x, xform.y
                 local xvel, yvel = vel.x, vel.y
                 xform.x, xform.y = x + xvel * dt, y + yvel * dt
             end
-        )
+        end
 
         local timePassed = 0
-        local oneTimeSystem = tiny.system(
-            function(dt)
-                timePassed = timePassed + dt
-            end
-        )
+        local oneTimeSystem = tiny.system()
+        function oneTimeSystem:update(world, entities, dt)
+            timePassed = timePassed + dt
+        end 
 
         before_each(function()
             entity1 = deep_copy(entityTemplate1)
