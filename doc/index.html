@@ -75,12 +75,9 @@
 <h2><a href="#System_functions">System functions </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#tiny.processingSystem">tiny.processingSystem (filter, entityCallback, onAdd, onRemove)</a></td>
-	<td class="summary">Creates a System that processes Entities every update.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#tiny.system">tiny.system (callback, filter, entityCallback, onAdd, onRemove)</a></td>
-	<td class="summary">Creates a System.</td>
+	<td class="name" nowrap><a href="#tiny.system">tiny.system (table)</a></td>
+	<td class="summary">Marks a table conforming to the System interface as a System recognized by
+ tiny-ecs.</td>
 	</tr>
 </table>
 <h2><a href="#World_functions">World functions </a></h2>
@@ -91,7 +88,15 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.add">tiny.add (world, ...)</a></td>
-	<td class="summary">Adds Entities and Systems to the World.</td>
+	<td class="summary">Shortcut for adding multiple Entities and Systems to the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.addEntity">tiny.addEntity (world, entity)</a></td>
+	<td class="summary">Adds an Entity to the world.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.addSystem">tiny.addSystem (world, system)</a></td>
+	<td class="summary">Adds a System to the world.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.clearEntities">tiny.clearEntities (world)</a></td>
@@ -114,6 +119,10 @@
 	<td class="summary">Gets count of Systems in World.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#tiny.getSystemIndex">tiny.getSystemIndex (world, system)</a></td>
+	<td class="summary">Gets the index of a System in the world.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#tiny.manageEntities">tiny.manageEntities (world)</a></td>
 	<td class="summary">Adds and removes Entities that have been marked.</td>
 	</tr>
@@ -123,7 +132,19 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.remove">tiny.remove (world, ...)</a></td>
-	<td class="summary">Removes Entities and Systems from the World.</td>
+	<td class="summary">Shortcut for removing multiple Entities and Systems from the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.removeEntity">tiny.removeEntity (world, entity)</a></td>
+	<td class="summary">Removes an Entity to the World.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.removeSystem">tiny.removeSystem (world, system)</a></td>
+	<td class="summary">Removes a System from the world.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.setSystemIndex">tiny.setSystemIndex (world, system, index)</a></td>
+	<td class="summary">Sets the index of a System in the world.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.update">tiny.update (world, dt)</a></td>
@@ -212,67 +233,30 @@
     <h2><a name="System_functions"></a>System functions </h2>
 
 
- A System a wrapper around function callbacks for manipulating Entities.
+ A System is a wrapper around function callbacks for manipulating Entities.
     <dl class="function">
     <dt>
-    <a name = "tiny.processingSystem"></a>
-    <strong>tiny.processingSystem (filter, entityCallback, onAdd, onRemove)</strong>
-    </dt>
-    <dd>
-    Creates a System that processes Entities every update.  Also provides
- optional callbacks for when Entities are added or removed from the System.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">filter</span>
-         Function of one argument, an Entity, that returns a boolean
-        </li>
-        <li><span class="parameter">entityCallback</span>
-         Function of two arguments, an Entity and delta time
-        </li>
-        <li><span class="parameter">onAdd</span>
-         Optional callback for when Entities are added to the System that
- takes one argument, an Entity
-        </li>
-        <li><span class="parameter">onRemove</span>
-         Similar to onAdd, but is instead called when an Entity is
- removed from the System
-        </li>
-    </ul>
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "tiny.system"></a>
-    <strong>tiny.system (callback, filter, entityCallback, onAdd, onRemove)</strong>
+    <strong>tiny.system (table)</strong>
     </dt>
     <dd>
-    Creates a System.
+    Marks a table conforming to the System interface as a System recognized by
+ tiny-ecs.  Systems are tables that contain at least one field, an update
+ function that takes parameters like so:
+ <code>function system:update(world, entities, dt)</code>. <a href="index.html#tiny.world">world</a> is the World the System
+ belongs to, <code>entities</code> is an unordered table of Entities with Entities as KEYS,
+ and <code>dt</code> is the delta time. There are also a few other optional callbacks:
+ <code>function system:filter(entity)</code> - returns a boolean,
+ <code>function system:onAdd(entity)</code> - returns nil,
+ <code>function system:onRemove(entity)</code> - returns nil.
+ For Filters, it is conveient to use <a href="index.html#tiny.requireAll">tiny.requireAll</a> or <a href="index.html#tiny.requireOne">tiny.requireOne</a>,
+ but one can write their own filters as well.
 
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">callback</span>
-         Function of one argument, delta time, that is called once
- per world update
-        </li>
-        <li><span class="parameter">filter</span>
-         Function of one argument, an Entity, that returns a boolean
-        </li>
-        <li><span class="parameter">entityCallback</span>
-         Function of two arguments, an Entity and delta time
-        </li>
-        <li><span class="parameter">onAdd</span>
-         Optional callback for when Enities are added to the System that
- takes one argument, an Entity
-        </li>
-        <li><span class="parameter">onRemove</span>
-         Similar to onAdd, but is instead called when an Entity is
- removed from the System
+        <li><span class="parameter">table</span>
+         A table to be used as System, or <code>nil</code> to create a new System.
         </li>
     </ul>
 
@@ -320,7 +304,7 @@
     <strong>tiny.add (world, ...)</strong>
     </dt>
     <dd>
-    Adds Entities and Systems to the World.
+    Shortcut for adding multiple Entities and Systems to the World.
  New objects will enter the World the next time World:update(dt) is called.
  Also call this method when an Entity has had its Components changed, such
  that it matches different Filters.
@@ -333,6 +317,56 @@
         </li>
         <li><span class="parameter">...</span>
          Systems and Entities
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.addEntity"></a>
+    <strong>tiny.addEntity (world, entity)</strong>
+    </dt>
+    <dd>
+    Adds an Entity to the world.
+ The new Entity will enter the world next time World:update is called.
+ Also call this on Entities that have changed Components such that it
+ matches different systems.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">entity</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.addSystem"></a>
+    <strong>tiny.addSystem (world, system)</strong>
+    </dt>
+    <dd>
+    Adds a System to the world.
+ The new System will enter the world next time World:update is called.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+
         </li>
     </ul>
 
@@ -453,6 +487,30 @@
 
 </dd>
     <dt>
+    <a name = "tiny.getSystemIndex"></a>
+    <strong>tiny.getSystemIndex (world, system)</strong>
+    </dt>
+    <dd>
+    Gets the index of a System in the world.  Lower indexed Systems are processed
+ before higher indexed systems.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "tiny.manageEntities"></a>
     <strong>tiny.manageEntities (world)</strong>
     </dt>
@@ -499,8 +557,8 @@
     <strong>tiny.remove (world, ...)</strong>
     </dt>
     <dd>
-    Removes Entities and Systems from the World.  Objects will exit the World the
- next time World:update(dt) is called.
+    Shortcut for removing multiple Entities and Systems from the World.
+ Objects will exit the World the next time World:update(dt) is called.
 
 
     <h3>Parameters:</h3>
@@ -510,6 +568,84 @@
         </li>
         <li><span class="parameter">...</span>
          Systems and Entities
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.removeEntity"></a>
+    <strong>tiny.removeEntity (world, entity)</strong>
+    </dt>
+    <dd>
+    Removes an Entity to the World.
+ The Entity will exit the World next time World:update is called.
+ Also call this on Entities that have changed Components such that it
+ matches different systems.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">entity</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.removeSystem"></a>
+    <strong>tiny.removeSystem (world, system)</strong>
+    </dt>
+    <dd>
+    Removes a System from the world.
+ The System will exit the World next time World:update is called.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.setSystemIndex"></a>
+    <strong>tiny.setSystemIndex (world, system, index)</strong>
+    </dt>
+    <dd>
+    Sets the index of a System in the world.  Changes the order in
+ which they Systems processed, because lower indexed Systems are processed
+ first.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">world</span>
+
+        </li>
+        <li><span class="parameter">system</span>
+
+        </li>
+        <li><span class="parameter">index</span>
+
         </li>
     </ul>
 
@@ -602,7 +738,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-03-31 19:59:57 </i>
+<i style="float:right;">Last updated 2015-04-21 21:58:31 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
