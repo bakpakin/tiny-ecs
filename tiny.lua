@@ -1,9 +1,6 @@
 --- @module tiny-ecs
 -- @author Calvin Rose
-local tiny = {}
-
---- Tiny-ecs Version, a period-separated three number string like "1.2.3"
-tiny._VERSION = "1.0.0"
+local tiny = { _VERSION = "1.0.1" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
