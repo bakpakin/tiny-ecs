@@ -40,11 +40,9 @@ local tiny = require("tiny")
 
 local talkingSystem = tiny.system()
 talkingSystem.filter = tiny.requireAll("name", "mass", "phrase")
-function talkingSystem:update(world, entities, dt)
-    for p in pairs(entities) do
-        p.mass = p.mass + dt * 3
-        print(p.name .. ", who weighs " .. p.mass .. " pounds, says, \"" .. p.phrase .. "\"")
-    end
+function talkingSystem:process(e, dt)
+    e.mass = e.mass + dt * 3
+    print(e.name .. ", who weighs " .. e.mass .. " pounds, says, \"" .. e.phrase .. "\"")
 end
 
 local joe = {
