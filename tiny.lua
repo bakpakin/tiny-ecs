@@ -8,15 +8,12 @@ tiny._VERSION = "1.0.0"
 -- Local versions of standard lua functions
 local tinsert = table.insert
 local tremove = table.remove
-local tconcat = table.concat
 local pairs = pairs
 local ipairs = ipairs
 local setmetatable = setmetatable
-local getmetatable = getmetatable
 local type = type
 
 -- Local versions of the library functions
-local tiny_system
 local tiny_manageEntities
 local tiny_manageSystems
 local tiny_updateSystem
@@ -88,18 +85,17 @@ local function isSystem(table)
     return table[systemTableKey]
 end
 
---- Marks a table conforming to the System interface as a System recognized by
--- tiny-ecs. Systems are tables that contain at least one field, an update 
--- function that takes parameters like so: 
--- `function system:update(world, entities, dt)`. `world` is the World the System
--- belongs to, `entities` is an unordered table of Entities with Entities as KEYS, 
--- and `dt` is the delta time. There are also a few other optional callbacks:
+--- Creates a System. Systems are tables that contain at least one field; 
+-- an update function that takes parameters like so: 
+-- `function system:update(entities, dt)`. `entities` is an unordered table of 
+-- Entities with Entities as KEYS, and `dt` is the delta time. There are also a 
+-- few other optional callbacks:
 -- `function system:filter(entity)` - returns a boolean,
 -- `function system:onAdd(entity)` - returns nil,
 -- `function system:onRemove(entity)` - returns nil.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
--- @param table A table to be used as System, or `nil` to create a new System.
+-- @param table A table to be used as a System, or `nil` to create a new System.
 function tiny.system(table)
     if table == nil then
         table = {}
@@ -107,9 +103,47 @@ function tiny.system(table)
     table[systemTableKey] = true
     return table
 end
-tiny_system = tiny.system
 
-local worldMetaTable = { __index = tiny }
+-- Update function for all Processing Systems.
+local function processingSystemUpdate(system, entities, dt)
+    local preProcess = system.preProcess
+    local process = system.process
+    local postProcess = system.postProcess
+    if preProcess then
+        preProcess(system, entities, dt)
+    end
+    if process then
+        for entity in pairs(entities) do
+            process(system, entity, dt)
+        end
+    end
+    if postProcess then
+        postProcess(system, entities, dt)
+    end
+end
+
+--- Creates a Processing System. A Processing System iterates through its 
+-- Entities in no particluar order, and updates them individually. It has two 
+-- important fields, `function system:process(entity, dt)`, and `function 
+-- system:filter(entity)`. `entities` is an unordered table of Entities with 
+-- Entities as KEYS, and `dt` is the delta time. There are also a  few other 
+-- optional callbacks:
+-- `function system:preProcess(entities, dt)` - returns nil,
+-- `function system:postProcess(entities, dt)` - returns nil,
+-- `function system:onAdd(entity)` - returns nil,
+-- `function system:onRemove(entity)` - returns nil.
+-- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
+-- but one can write their own filters as well.
+-- @param table A table to be used as a System, or `nil` to create a new 
+-- Processing System.
+function tiny.processingSystem(table)
+    if table == nil then
+        table = {}
+    end
+    table[systemTableKey] = true
+    table.update = processingSystemUpdate
+    return table
+end
 
 --- World functions.
 -- A World is a container that manages Entities and Systems. The tiny-ecs module
@@ -117,6 +151,8 @@ local worldMetaTable = { __index = tiny }
 -- World:method can be used for any function in the library. For example,
 -- `tiny.add(world, e1, e2, e3)` is the same as `world:add(e1, e2, e3).`
 -- @section World
+
+local worldMetaTable = { __index = tiny }
 
 --- Creates a new World.
 -- Can optionally add default Systems and Entities.
@@ -134,7 +170,7 @@ function tiny.world(...)
         -- Statuses: remove, add
         systemStatus = {},
 
-        -- Set of Entities -- active are true, inactive are false
+        -- Set of Entities
         entities = {},
 
         -- Number of Entities in World.
@@ -244,7 +280,7 @@ tiny_remove = tiny.remove
 -- @param dt Delta time
 function tiny.updateSystem(world, system, dt)
     local es = world.systemEntities[system]
-    system:update(world, es, dt)
+    system:update(es, dt)
 end
 tiny_updateSystem = tiny.updateSystem
 

@@ -85,21 +85,19 @@ describe('tiny-ecs:', function()
 
         local world, entity1, entity2, entity3
 
-        local moveSystem = tiny.system()
+        local moveSystem = tiny.processingSystem()
         moveSystem.filter = tiny.requireAll("xform", "vel")
-        function moveSystem:update(world, entities, dt)
-            for e in pairs(entities) do
-                local xform = e.xform
-                local vel = e.vel
-                local x, y = xform.x, xform.y
-                local xvel, yvel = vel.x, vel.y
-                xform.x, xform.y = x + xvel * dt, y + yvel * dt
-            end
+        function moveSystem:process(e, dt)
+            local xform = e.xform
+            local vel = e.vel
+            local x, y = xform.x, xform.y
+            local xvel, yvel = vel.x, vel.y
+            xform.x, xform.y = x + xvel * dt, y + yvel * dt
         end
 
         local timePassed = 0
         local oneTimeSystem = tiny.system()
-        function oneTimeSystem:update(world, entities, dt)
+        function oneTimeSystem:update(entities, dt)
             timePassed = timePassed + dt
         end 
 
