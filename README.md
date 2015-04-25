@@ -5,6 +5,10 @@ for simulating large and complex systems. For more explanation on Entity
 Component Systems, here is some
 [basic info](http://en.wikipedia.org/wiki/Entity_component_system "Wikipedia").
 
+Tiny-ecs also works well with Objected Oriented programming in lua because
+Systems and Entities do not use metatables. This means you can subclass your
+Systems and Entities, and use existing lua class frameworks with tiny-ecs, no problem.
+
 ## Use It ##
 Copy paste tiny.lua into your source folder.
 
@@ -15,7 +19,7 @@ take an Entity as a parameter.
 
 ### Entities ###
 Entities are simply lua tables of data that gets processed by Systems. Entities
-should contain primarily data rather that code, as it is the Systems's job to
+should contain primarily data rather than code, as it is the Systems's job to
 do logic on data. Henceforth, a key-value pair in an Entity will
 be referred to as a Component.
 
@@ -27,7 +31,8 @@ and Entities. In typical use, only one World is used at a time.
 Systems in tiny-ecs describe how to update Entities. Systems select certain Entities
 using a Filter, and then only update those select Entities. Some Systems don't
 update Entities, and instead just act as function callbacks every update. Tiny-ecs
-provides functions for creating Systems easily.
+provides functions for creating Systems easily, as well as creating Systems that
+can be used in an Object Orientented fashion.
 
 ### Filters ###
 Filters are used to select Entities. Filters can be any lua function, but
