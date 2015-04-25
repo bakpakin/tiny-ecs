@@ -43,7 +43,7 @@ only Entities that have all required components.
 ```lua
 local tiny = require("tiny")
 
-local talkingSystem = tiny.system()
+local talkingSystem = tiny.processingSystem()
 talkingSystem.filter = tiny.requireAll("name", "mass", "phrase")
 function talkingSystem:process(e, dt)
     e.mass = e.mass + dt * 3
