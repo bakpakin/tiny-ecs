@@ -1,6 +1,6 @@
 --- @module tiny-ecs
 -- @author Calvin Rose
-local tiny = { _VERSION = "1.0.1" }
+local tiny = { _VERSION = "1.0.2" }
 
 require "luarocks.loader"
 local inspect = require "inspect"
