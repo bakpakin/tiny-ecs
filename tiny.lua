@@ -540,11 +540,16 @@ end
 -- @param system
 -- @param index
 function tiny.setSystemIndex(world, system, index)
-    local oldIndex = world.systemIndices[system]
+    local systemIndices = world.systemIndices
+    local oldIndex = systemIndices[system]
     local systems = world.systems
+
     tremove(systems, oldIndex)
     tinsert(systems, index, system)
-    world.systemIndices[system] = index
+
+    for i = oldIndex, index, index >= oldIndex and 1 or -1 do
+        systemIndices[systems[i]] = i
+    end
 end
 
 --- Activates Systems in the World.

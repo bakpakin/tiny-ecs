@@ -197,6 +197,14 @@ describe('tiny-ecs:', function()
             assert.equals(3, world:getEntityCount())
         end)
 
+        it("Reorder Systems", function()
+            world:update(1)
+            world:setSystemIndex(moveSystem, 2)
+            world:update(1)
+            assert.equals(2, world:getSystemIndex(moveSystem))
+            assert.equals(1, world:getSystemIndex(oneTimeSystem))
+        end)
+
     end)
 
 end)
