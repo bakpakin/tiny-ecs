@@ -2,9 +2,6 @@
 -- @author Calvin Rose
 local tiny = { _VERSION = "1.0.2" }
 
-require "luarocks.loader"
-local inspect = require "inspect"
-
 -- Local versions of standard lua functions
 local tinsert = table.insert
 local tremove = table.remove
