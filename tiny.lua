@@ -1,6 +1,6 @@
 --- @module tiny-ecs
 -- @author Calvin Rose
-local tiny = { _VERSION = "1.0.2" }
+local tiny = { _VERSION = "1.0-2" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
