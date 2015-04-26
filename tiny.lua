@@ -182,20 +182,12 @@ function tiny.world(...)
         -- Number of Entities in World.
         entityCount = 0,
 
-        -- List of Systems
+        -- List of System Data. A data element is a table with 4
+        -- keys: system, indices, entities, and active.
         systems = {},
 
-        -- Table of Systems to whether or not they are active.
-        activeSystems = {},
-
         -- Table of Systems to System Indices
-        systemIndices = {},
-
-        -- Table of Systems to Lists of matching Entities
-        systemEntities = {},
-
-        -- Table of Systems to Tables of Entities to their Indices
-        systemEntityIndices = {}
+        systemIndices = {}
     }
 
     tiny_add(ret, ...)
@@ -311,37 +303,27 @@ function tiny.manageSystems(world)
         local systemIndices = world.systemIndices
         local entities = world.entities
         local systems = world.systems
-        local activeSystems = world.activeSystems
-        local systemEntities = world.systemEntities
-        local systemEntityIndices = world.systemEntityIndices
 
-        local system, index, filter, entityList, entityIndices, entityIndex, onRemove, onAdd
+        local system, systemData, index, filter, entityList, entityIndices, entityIndex, onRemove, onAdd
 
         -- Remove Systems
         for i = 1, #s2r do
             system = s2r[i]
             index = systemIndices[system]
             if index then
-
+                systemData = systems[index]
                 onRemove = system.onRemove
                 if onRemove then
-                    entityList = systemEntities[system]
+                    entityList = systemData.entities
                     for j = 1, #entityList do
                         onRemove(system, entityList[j])
                     end
                 end
-
-                for j = index + 1, #systems do
-                    systemIndices[systems[j]] = j - 1
-                end
-
                 systemIndices[system] = nil
-                activeSystems[system] = nil
-                systemEntities[system] = nil
-                systemEntityIndices[system] = nil
-
                 tremove(systems, index)
-
+                for j = index, #systems do
+                    systemIndices[systems[j].system] = j
+                end
             end
             s2r[i] = nil
         end
@@ -350,15 +332,12 @@ function tiny.manageSystems(world)
         for i = 1, #s2a do
             system = s2a[i]
             if not systemIndices[system] then
+                entityList = {}
+                entityIndices = {}
+                systemData = { system = system, entities = entityList, indices = entityIndices, active = true }
                 index = #systems + 1
                 systemIndices[system] = index
-                systems[index] = system
-                activeSystems[system] = true
-
-                entityList = {}
-                systemEntities[system] = entityList
-                entityIndices = {}
-                systemEntityIndices[system] = entityIndices
+                systems[index] = systemData
 
                 -- Try to add Entities
                 onAdd = system.onAdd
@@ -394,13 +373,10 @@ function tiny.manageEntities(world)
         return
     end
 
-    local entityStatus = world.entityStatus
-    local systemEntities = world.systemEntities
     local entities = world.entities
     local systems = world.systems
     local entityCount = world.entityCount
-    local systemEntityIndices = world.systemEntityIndices
-    local entity, system, index, onRemove, onAdd, ses, seis, filter, tmpEntity
+    local entity, system, systemData, index, onRemove, onAdd, ses, seis, filter, tmpEntity
 
     -- Remove Entities
     for i = 1, #e2r do
@@ -409,9 +385,10 @@ function tiny.manageEntities(world)
             entities[entity] = nil
 
             for j = 1, #systems do
-                system = systems[j]
-                ses = systemEntities[system]
-                seis = systemEntityIndices[system]
+                systemData = systems[j]
+                system = systemData.system
+                ses = systemData.entities
+                seis = systemData.indices
                 index = seis[entity]
 
                 if index then
@@ -441,9 +418,10 @@ function tiny.manageEntities(world)
             entities[entity] = true
 
             for j = 1, #systems do
-                system = systems[j]
-                ses = systemEntities[system]
-                seis = systemEntityIndices[system]
+                systemData = systems[j]
+                system = systemData.system
+                ses = systemData.entities
+                seis = systemData.indices
                 filter = system.filter
                 if filter and filter(system, entity) then
                     index = #ses + 1
@@ -478,16 +456,14 @@ function tiny.update(world, dt)
     tiny_manageSystems(world)
     tiny_manageEntities(world)
 
-    local activeSystems = world.activeSystems
     local systems = world.systems
-    local systemEntities = world.systemEntities
-    local system
+    local systemData
 
     --  Iterate through Systems IN ORDER
     for i = 1, #systems do
-        system = systems[i]
-        if activeSystems[system] then
-            system:update(systemEntities[system], dt)
+        systemData = systems[i]
+        if systemData.active then
+            systemData.system:update(systemData.entities, dt)
         end
     end
 end
@@ -509,7 +485,7 @@ end
 function tiny.clearSystems(world)
     local systems = world.systems
     for i = #systems, 1, -1 do
-        tiny_removeSystem(world, systems[i])
+        tiny_removeSystem(world, systems[i].system)
     end
 end
 
@@ -543,12 +519,13 @@ function tiny.setSystemIndex(world, system, index)
     local systemIndices = world.systemIndices
     local oldIndex = systemIndices[system]
     local systems = world.systems
+    local systemData = systems[oldIndex]
 
     tremove(systems, oldIndex)
-    tinsert(systems, index, system)
+    tinsert(systems, index, systemData)
 
     for i = oldIndex, index, index >= oldIndex and 1 or -1 do
-        systemIndices[systems[i]] = i
+        systemIndices[systems[i].system] = i
     end
 end
 
@@ -559,8 +536,8 @@ end
 -- World.
 function tiny.activate(world, ...)
     local args = {...}
-    for _, obj in ipairs(args) do
-        world.activeSystems[obj] = true
+    for _, system in ipairs(args) do
+        world.systems[world.systemIndices[system]].active = true
     end
 end
 
@@ -573,8 +550,8 @@ end
 -- World.
 function tiny.deactivate(world, ...)
     local args = {...}
-    for _, obj in ipairs(args) do
-        world.activeSystems[obj] = nil
+    for _, system in ipairs(args) do
+        world.systems[world.systemIndices[system]].active = false
     end
 end
 
