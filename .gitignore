@@ -3,3 +3,6 @@ doc/*
 index.html
 ldoc.css
 topics/*
+
+#Ignore generated rocks
+*.rock
