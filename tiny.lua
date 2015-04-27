@@ -1,6 +1,6 @@
 --- @module tiny-ecs
 -- @author Calvin Rose
-local tiny = { _VERSION = "1.0-2" }
+local tiny = { _VERSION = "1.0-3" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -457,13 +457,17 @@ function tiny.update(world, dt)
     tiny_manageEntities(world)
 
     local systems = world.systems
-    local systemData
+    local systemData, system, update
 
     --  Iterate through Systems IN ORDER
     for i = 1, #systems do
         systemData = systems[i]
         if systemData.active then
-            systemData.system:update(systemData.entities, dt)
+            system = systemData.system
+            update = system.update
+            if update then
+                update(system, systemData.entities, dt)
+            end
         end
     end
 end
