@@ -9,9 +9,6 @@ Tiny-ecs also works well with Objected Oriented programming in lua because
 Systems and Entities do not use metatables. This means you can subclass your
 Systems and Entities, and use existing lua class frameworks with tiny-ecs, no problem.
 
-## Use It ##
-Copy paste tiny.lua into your source folder.
-
 ## Overview ##
 Tiny-ecs has four important types: Worlds, Filters, Systems, and Entities.
 Entities, however, can be any lua table, and Filters are just functions that
@@ -64,9 +61,16 @@ for i = 1, 20 do
 end
 ```
 
+## Use It ##
+Copy paste tiny.lua into your source folder.
+
+## Luarocks ##
+Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with 
+`luarocks install tiny-ecs`.
+
 ## Demo ##
 Check out the [demo](https://github.com/bakpakin/tiny-ecs/tree/demo-commandokibbles), a game 
-originally written for Ludum Dare 32 with the theme 'An Unconventioanl Weapon'. The demo uses 
+originally written for Ludum Dare 32 with the theme 'An Unconventional Weapon'. The demo uses 
 [LOVE](https://love2d.org/), an amazing game framework for lua.
 
 ## Testing ##
