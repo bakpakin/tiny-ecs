@@ -99,7 +99,7 @@ describe('tiny-ecs:', function()
         local oneTimeSystem = tiny.system()
         function oneTimeSystem:update(entities, dt)
             timePassed = timePassed + dt
-        end 
+        end
 
         before_each(function()
             entity1 = deep_copy(entityTemplate1)

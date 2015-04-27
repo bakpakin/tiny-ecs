@@ -65,12 +65,12 @@ end
 Copy paste tiny.lua into your source folder.
 
 ## Luarocks ##
-Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with 
+Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
 `luarocks install tiny-ecs`.
 
 ## Demo ##
-Check out the [demo](https://github.com/bakpakin/tiny-ecs/tree/demo-commandokibbles), a game 
-originally written for Ludum Dare 32 with the theme 'An Unconventional Weapon'. The demo uses 
+Check out the [demo](https://github.com/bakpakin/tiny-ecs/tree/demo-commandokibbles), a game
+originally written for Ludum Dare 32 with the theme 'An Unconventional Weapon'. The demo uses
 [LOVE](https://love2d.org/), an amazing game framework for lua.
 
 ## Testing ##

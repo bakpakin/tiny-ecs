@@ -81,10 +81,10 @@ local function isSystem(table)
     return table[systemTableKey]
 end
 
---- Creates a System. Systems are tables that contain at least one field; 
--- an update function that takes parameters like so: 
--- `function system:update(entities, dt)`. `entities` is an unordered table of 
--- Entities with Entities as KEYS, and `dt` is the delta time. There are also a 
+--- Creates a System. Systems are tables that contain at least one field;
+-- an update function that takes parameters like so:
+-- `function system:update(entities, dt)`. `entities` is an unordered table of
+-- Entities with Entities as KEYS, and `dt` is the delta time. There are also a
 -- few other optional callbacks:
 -- `function system:filter(entity)` - returns a boolean,
 -- `function system:onAdd(entity)` - returns nil,
@@ -124,11 +124,11 @@ local function processingSystemUpdate(system, entities, dt)
     end
 end
 
---- Creates a Processing System. A Processing System iterates through its 
--- Entities in no particluar order, and updates them individually. It has two 
--- important fields, `function system:process(entity, dt)`, and `function 
--- system:filter(entity)`. `entities` is Entities, 
--- and `dt` is the delta time. There are also a few other 
+--- Creates a Processing System. A Processing System iterates through its
+-- Entities in no particluar order, and updates them individually. It has two
+-- important fields, `function system:process(entity, dt)`, and `function
+-- system:filter(entity)`. `entities` is Entities,
+-- and `dt` is the delta time. There are also a few other
 -- optional callbacks:
 -- `function system:preProcess(entities, dt)` - returns nil,
 -- `function system:postProcess(entities, dt)` - returns nil,
@@ -136,7 +136,7 @@ end
 -- `function system:onRemove(entity)` - returns nil.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
--- @param table A table to be used as a System, or `nil` to create a new 
+-- @param table A table to be used as a System, or `nil` to create a new
 -- Processing System.
 function tiny.processingSystem(table)
     if table == nil then
@@ -176,7 +176,7 @@ function tiny.world(...)
         -- List of Entities to remove
         systemsToRemove = {},
 
-        -- Set of Entities 
+        -- Set of Entities
         entities = {},
 
         -- Number of Entities in World.
@@ -200,7 +200,7 @@ end
 
 --- Adds an Entity to the world.
 -- The new Entity will enter the world next time World:update is called.
--- Also call this on Entities that have changed Components such that it 
+-- Also call this on Entities that have changed Components such that it
 -- matches different systems.
 -- @param world
 -- @param entity
@@ -243,7 +243,7 @@ tiny_add = tiny.add
 
 --- Removes an Entity to the World.
 -- The Entity will exit the World next time World:update is called.
--- Also call this on Entities that have changed Components such that it 
+-- Also call this on Entities that have changed Components such that it
 -- matches different systems.
 -- @param world
 -- @param entity
@@ -263,7 +263,7 @@ function tiny.removeSystem(world, system)
 end
 tiny_removeSystem = tiny.removeSystem
 
---- Shortcut for removing multiple Entities and Systems from the World. 
+--- Shortcut for removing multiple Entities and Systems from the World.
 -- Objects will exit the World the next time World:update(dt) is called.
 -- @param world
 -- @param ... Systems and Entities
@@ -514,7 +514,7 @@ function tiny.getSystemIndex(world, system)
 end
 
 --- Sets the index of a System in the world. Changes the order in
--- which they Systems processed, because lower indexed Systems are processed 
+-- which they Systems processed, because lower indexed Systems are processed
 -- first.
 -- @param world
 -- @param system
