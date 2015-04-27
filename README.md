@@ -64,6 +64,11 @@ for i = 1, 20 do
 end
 ```
 
+## Demo ##
+Check out the [demo](https://github.com/bakpakin/tiny-ecs/tree/demo-commandokibbles), a game 
+originally written for Ludum Dare 32 with the theme 'An Unconventioanl Weapon'. The demo uses 
+[LOVE](https://love2d.org/), an amazing game framework for lua.
+
 ## Testing ##
 Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and run
 `busted` from the command line to test.
@@ -76,5 +81,5 @@ Documentation can be generated locally with [LDoc](http://stevedonovan.github.io
 
 * More testing
 * Performance testing / optimization
+* Add more System types
 * Improve Documentation
-* Add more complete examples
