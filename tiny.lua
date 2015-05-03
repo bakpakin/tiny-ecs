@@ -596,30 +596,24 @@ function tiny.setSystemIndex(world, system, index)
     end
 end
 
---- Activates Systems in the World.
+--- Activate a System in the World.
 -- Activated Systems will be update whenever tiny.update(world, dt) is called.
 -- @param world
--- @param ... Systems to activate. The Systems must already be added to the
+-- @param system System to activate. The System must already be added to the
 -- World.
-function tiny.activate(world, ...)
-    local args = {...}
-    for _, system in ipairs(args) do
-        world.systems[world.systemIndices[system]].active = true
-    end
+function tiny.activate(world, system)
+    world.systems[world.systemIndices[system]].active = true
 end
 
---- Deactivates Systems in the World.
+--- Deactivates a System in the World.
 -- Deactivated Systems must be update manually, and will not update when the
 -- rest of World updates. They will, however, process new Entities added while
 -- the System is deactivated.
 -- @param world
--- @param ... Systems to deactivate. The Systems must already be added to the
+-- @param system System to deactivate. The System must already be added to the
 -- World.
-function tiny.deactivate(world, ...)
-    local args = {...}
-    for _, system in ipairs(args) do
-        world.systems[world.systemIndices[system]].active = false
-    end
+function tiny.deactivate(world, system)
+    world.systems[world.systemIndices[system]].active = false
 end
 
 return tiny
