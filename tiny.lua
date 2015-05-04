@@ -555,7 +555,7 @@ end
 function tiny.clearSystems(world)
     local systems = world.systems
     for i = #systems, 1, -1 do
-        tiny_removeSystem(world, systems[i].system)
+        tiny_removeSystem(world, systems[i])
     end
 end
 
