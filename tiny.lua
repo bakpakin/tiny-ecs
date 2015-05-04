@@ -21,6 +21,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --- @module tiny-ecs
 -- @author Calvin Rose
+-- @license MIT
+-- @copyright 2015
 local tiny = { _VERSION = "dev" }
 
 -- Local versions of standard lua functions
@@ -44,11 +46,40 @@ local tiny_remove
 
 --- Filter functions.
 -- A Filter is a function that selects which Entities apply to a System.
+-- Filters take two parameters, the System and the Entity, and return a boolean
+-- value indicating if the Entity should be processed by the System.
+--
+-- Filters must be added to Systems by setting the `filter` field of the System.
+-- Filter's returned by `tiny.requireAll` and `tiny.requireOne` are immutable
+-- and can be used by multiple Systems.
+--
+--    local f1 = tiny.requireAll("position", "velocity", "size")
+--    local f2 = tiny.requireOne("position", "velocity", "size")
+--
+--    local e1 = {
+--        position = {2, 3},
+--        velocity = {3, 3},
+--        size = {4, 4}
+--    }
+--
+--    local entity2 = {
+--        position = {4, 5},
+--        size = {4, 4}
+--    }
+--
+--    local e3 = {
+--        position = {2, 3},
+--        velocity = {3, 3}
+--    }
+--
+--    print(f1(nil, e1), f1(nil, e2), f1(nil, e3)) -- prints true, false, false
+--    print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
+--
 -- @section Filter
 
---- Makes a Filter that filters Entities with specified Components.
--- An Entity must have all Components to match the filter.
--- @param ... List of Components
+--- Makes a Filter that selects Entities with all specified Components and
+-- Filters.
+-- @param ... List of required Components and other Filters.
 function tiny.requireAll(...)
     local components = {...}
     local len = #components
@@ -68,9 +99,9 @@ function tiny.requireAll(...)
     end
 end
 
---- Makes a Filter that filters Entities with specified Components.
--- An Entity must have at least one specified Component to match the filter.
--- @param ... List of Components
+--- Makes a Filter that selects Entities with at least one of the specified
+-- Components and Filters.
+-- @param ... List of required Components and other Filters.
 function tiny.requireOne(...)
     local components = {...}
     local len = #components
@@ -103,17 +134,27 @@ local function isSystem(table)
     return table[systemTableKey]
 end
 
---- Creates a System. Systems are tables that contain at least one field;
+--- Creates a System. Systems are tables that contain at least one method;
 -- an update function that takes parameters like so:
--- `function system:update(entities, dt)`. `entities` is an unordered table of
--- Entities with Entities as KEYS, and `dt` is the delta time. There are also a
--- few other optional callbacks:
--- `function system:filter(entity)` - returns a boolean,
--- `function system:onAdd(entity)` - returns nil,
--- `function system:onRemove(entity)` - returns nil,
--- `function system:onModify(dt)` - returns nil.
+--
+--   * `function system:update(dt)`.
+--
+-- There are also a few other optional callbacks:
+--
+--   * `function system:filter(entity)`
+--   * `function system:onAdd(entity)`
+--   * `function system:onRemove(entity)`
+--   * `function system:onModify(dt)`
+--
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
--- but one can write their own filters as well.
+-- but one can write their own filters as well. Set the Filter of your System
+-- like so:
+--    system.filter = tiny.requireAll("a", "b", "c")
+-- or
+--    function system:filter(entity)
+--        return entity.myRequiredComponentName ~= nil
+--    end
+--
 -- @param table A table to be used as a System, or `nil` to create a new System.
 function tiny.system(table)
     table = table or {}
@@ -146,21 +187,23 @@ local function processingSystemUpdate(system, dt)
     end
 end
 
---- Creates a Processing System. A Processing System iterates through its
--- Entities in no particluar order, and updates them individually. It has two
--- important fields, `function system:process(entity, dt)`, and `function
--- system:filter(entity)`. `entities` is Entities,
--- and `dt` is the delta time. There are also a few other
--- optional callbacks:
--- `function system:preProcess(entities, dt)` - returns nil,
--- `function system:postProcess(entities, dt)` - returns nil,
--- `function system:onAdd(entity)` - returns nil,
--- `function system:onRemove(entity)` - returns nil,
--- `function system:onModify(dt)` - returns nil.
--- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
--- but one can write their own filters as well.
+--- Creates a Processing System.
+--
+-- A Processing System iterates through its Entities in no particluar order, and
+-- updates them individually. It has two important fields:
+--
+--   * `function system:process(entity, dt)`
+--   * `function system:filter(entity)`
+--
+-- There are also a few other optional callbacks, including the optional
+-- callbacks in `tiny.system`:
+--
+--   * `function system:preProcess(entities, dt)`
+--   * `function system:postProcess(entities, dt)`
+--
 -- @param table A table to be used as a System, or `nil` to create a new
 -- Processing System.
+-- @see system
 function tiny.processingSystem(table)
     table = table or {}
     table[systemTableKey] = true
@@ -188,20 +231,18 @@ local function sortedSystemOnModify(system, dt)
 end
 
 --- Creates a Sorted Processing System. A Sorted System iterates through its
--- Entities in a specific order, and updates them individually. It has two
--- important fields, `function system:process(entity, dt)`, and `function
--- system:filter(entity)`. `entities` is Entities,
--- and `dt` is the delta time. There are also a few other
--- optional callbacks:
--- `function system:preProcess(entities, dt)` - returns nil,
--- `function system:postProcess(entities, dt)` - returns nil,
--- `function system:onAdd(entity)` - returns nil,
--- `function system:onRemove(entity)` - returns nil,
--- `function system:compare(entity1, entity2)` - returns boolean.
--- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
--- but one can write their own filters as well.
+-- Entities in a specific order, and updates them individually. It has three
+-- important methods:
+--
+--   * `function system:process(entity, dt)`
+--   * `function system:compare(entity1, entity2)`
+--   * `function system:filter(entity)`
+--
+-- Sorted Systems have the same optitonal callbacks as ProcessingSystems.
 -- @param table A table to be used as a System, or `nil` to create a new
--- Processing System.
+-- Sorted System.
+-- @see system
+-- @see processingSystem
 function tiny.sortedSystem(table)
     table = table or {}
     table[systemTableKey] = true
@@ -212,10 +253,13 @@ function tiny.sortedSystem(table)
 end
 
 --- World functions.
--- A World is a container that manages Entities and Systems. The tiny-ecs module
--- is set to be the `__index` of all World tables, so the often clearer syntax
--- of World:method can be used for any function in the library. For example,
--- `tiny.add(world, e1, e2, e3)` is the same as `world:add(e1, e2, e3).`
+-- A World is a container that manages Entities and Systems. Typically, a
+-- program uses one World at a time.
+--
+-- The tiny-ecs module is set to be the `__index` of all World tables, so the
+-- often clearer syntax of `world:method()` can be used for any function in the
+-- library. For example, `tiny.add(world, e1, e2, e3)` is the same as
+-- `world:add(e1, e2, e3).`
 -- @section World
 
 local worldMetaTable = { __index = tiny }
@@ -263,9 +307,8 @@ function tiny.world(...)
 end
 
 --- Adds an Entity to the world.
--- The new Entity will enter the world next time World:update is called.
--- Also call this on Entities that have changed Components such that it
--- matches different systems.
+-- Also call this on Entities that have changed Components such that they
+-- match different Filters.
 -- @param world
 -- @param entity
 function tiny.addEntity(world, entity)
@@ -278,7 +321,6 @@ end
 tiny_addEntity = tiny.addEntity
 
 --- Adds a System to the world.
--- The new System will enter the world next time World:update is called.
 -- @param world
 -- @param system
 function tiny.addSystem(world, system)
@@ -288,11 +330,10 @@ end
 tiny_addSystem = tiny.addSystem
 
 --- Shortcut for adding multiple Entities and Systems to the World.
--- New objects will enter the World the next time World:update(dt) is called.
--- Also call this method when an Entity has had its Components changed, such
--- that it matches different Filters.
 -- @param world
 -- @param ... Systems and Entities
+-- @see addEntity
+-- @see addSystem
 function tiny.add(world, ...)
     local args = {...}
     for _, obj in ipairs(args) do
@@ -306,9 +347,6 @@ end
 tiny_add = tiny.add
 
 --- Removes an Entity to the World.
--- The Entity will exit the World next time World:update is called.
--- Also call this on Entities that have changed Components such that it
--- matches different systems.
 -- @param world
 -- @param entity
 function tiny.removeEntity(world, entity)
@@ -318,7 +356,6 @@ end
 tiny_removeEntity = tiny.removeEntity
 
 --- Removes a System from the world.
--- The System will exit the World next time World:update is called.
 -- @param world
 -- @param system
 function tiny.removeSystem(world, system)
@@ -328,9 +365,10 @@ end
 tiny_removeSystem = tiny.removeSystem
 
 --- Shortcut for removing multiple Entities and Systems from the World.
--- Objects will exit the World the next time World:update(dt) is called.
 -- @param world
 -- @param ... Systems and Entities
+-- @see removeEntity
+-- @see removeSystem
 function tiny.remove(world, ...)
     local args = {...}
     for _, obj in ipairs(args) do
@@ -499,8 +537,7 @@ function tiny_manageEntities(world)
 end
 
 --- Updates the World.
--- Frees Entities that have been marked for freeing, adds
--- entities that have been marked for adding, etc.
+-- Put this in your main loop.
 -- @param world
 -- @param dt Delta time
 function tiny.update(world, dt)
@@ -534,8 +571,6 @@ function tiny.update(world, dt)
 end
 
 --- Removes all Entities from the World.
--- When World:update(dt) is next called,
--- all Entities will be removed.
 -- @param world
 function tiny.clearEntities(world)
     for e in pairs(world.entities) do
@@ -544,8 +579,6 @@ function tiny.clearEntities(world)
 end
 
 --- Removes all Systems from the World.
--- When World:update(dt) is next called,
--- all Systems will be removed.
 -- @param world
 function tiny.clearSystems(world)
     local systems = world.systems
@@ -566,7 +599,7 @@ function tiny.getSystemCount(world)
     return #(world.systems)
 end
 
---- Gets the index of a System in the world. Lower indexed Systems are processed
+--- Gets the index of a System in the World. Lower indexed Systems are processed
 -- before higher indexed systems.
 -- @param world
 -- @param system
@@ -574,7 +607,7 @@ function tiny.getSystemIndex(world, system)
     return world.systemIndices[system]
 end
 
---- Sets the index of a System in the world. Changes the order in
+--- Sets the index of a System in the World. Changes the order in
 -- which they Systems processed, because lower indexed Systems are processed
 -- first.
 -- @param world
