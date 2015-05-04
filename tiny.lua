@@ -111,7 +111,7 @@ end
 -- `function system:filter(entity)` - returns a boolean,
 -- `function system:onAdd(entity)` - returns nil,
 -- `function system:onRemove(entity)` - returns nil,
--- `function system:onModify(systemData, dt)` - returns nil.
+-- `function system:onModify(dt)` - returns nil.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
 -- @param table A table to be used as a System, or `nil` to create a new System.
@@ -158,7 +158,7 @@ end
 -- `function system:postProcess(entities, dt)` - returns nil,
 -- `function system:onAdd(entity)` - returns nil,
 -- `function system:onRemove(entity)` - returns nil,
--- `function system:onModify(systemData, dt)` - returns nil.
+-- `function system:onModify(dt)` - returns nil.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
 -- @param table A table to be used as a System, or `nil` to create a new

@@ -1,5 +1,5 @@
 local tiny = require "tiny"
-
+print("tiny version: " .. tiny._VERSION)
 -- Taken from answer at http://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
 local function deep_copy(o, seen)
   seen = seen or {}
