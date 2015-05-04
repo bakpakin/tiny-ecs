@@ -1,24 +1,15 @@
 local tiny = require "tiny"
-print("tiny version: " .. tiny._VERSION)
--- Taken from answer at http://stackoverflow.com/questions/640642/how-do-you-copy-a-lua-table-by-value
-local function deep_copy(o, seen)
-  seen = seen or {}
-  if o == nil then return nil end
-  if seen[o] then return seen[o] end
 
-  local no
-  if type(o) == 'table' then
-    no = {}
-    seen[o] = no
-
-    for k, v in next, o, nil do
-      no[deep_copy(k, seen)] = deep_copy(v, seen)
+local function deep_copy(x)
+    if type(x) == 'table' then
+        local nx = {}
+        for k, v in next, x, nil do
+            nx[deep_copy(k)] = deep_copy(v)
+        end
+        return nx
+    else
+        return x
     end
-    setmetatable(no, deep_copy(getmetatable(o), seen))
-  else -- number, string, boolean, etc
-    no = o
-  end
-  return no
 end
 
 local entityTemplate1 = {
@@ -138,15 +129,15 @@ describe('tiny-ecs:', function()
             assert.equals(0, world:getSystemCount())
         end)
 
-        it("Disable and Enable Systems", function()
-            world:deactivate(moveSystem)
-            world:deactivate(oneTimeSystem)
+        it("Deactivate and Activate Systems", function()
+            moveSystem.active = false
+            oneTimeSystem.active = false
             world:update(1)
             assert.equals(world:getSystemCount(), 2)
             assert.equals(timePassed, 0)
             assert.equals(entity1.xform.x, entityTemplate1.xform.x)
-            world:activate(moveSystem)
-            world:activate(oneTimeSystem)
+            moveSystem.active = true
+            oneTimeSystem.active = true
             world:update(1)
             assert.equals(timePassed, 1)
             assert.are_not.equal(entity1.xform.x, entityTemplate1.xform.x)

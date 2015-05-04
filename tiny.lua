@@ -52,12 +52,12 @@ local tiny_remove
 function tiny.requireAll(...)
     local components = {...}
     local len = #components
-    return function(_, e)
+    return function(system, e)
         local c
         for i = 1, len do
             c = components[i]
             if type(c) == 'function' then
-                if not c(_, e) then
+                if not c(system, e) then
                     return false
                 end
             elseif e[c] == nil then
@@ -74,12 +74,12 @@ end
 function tiny.requireOne(...)
     local components = {...}
     local len = #components
-    return function(_, e)
+    return function(system, e)
         local c
         for i = 1, len do
             c = components[i]
             if type(c) == 'function' then
-                if c(_, e) then
+                if c(system, e) then
                     return true
                 end
             elseif e[c] ~= nil then
@@ -116,9 +116,7 @@ end
 -- but one can write their own filters as well.
 -- @param table A table to be used as a System, or `nil` to create a new System.
 function tiny.system(table)
-    if table == nil then
-        table = {}
-    end
+    table = table or {}
     table[systemTableKey] = true
     return table
 end
@@ -164,9 +162,7 @@ end
 -- @param table A table to be used as a System, or `nil` to create a new
 -- Processing System.
 function tiny.processingSystem(table)
-    if table == nil then
-        table = {}
-    end
+    table = table or {}
     table[systemTableKey] = true
     table.update = processingSystemUpdate
     return table
@@ -207,9 +203,7 @@ end
 -- @param table A table to be used as a System, or `nil` to create a new
 -- Processing System.
 function tiny.sortedSystem(table)
-    if table == nil then
-        table = {}
-    end
+    table = table or {}
     table[systemTableKey] = true
     table.update = processingSystemUpdate
     table.onModify = sortedSystemOnModify
@@ -597,26 +591,6 @@ function tiny.setSystemIndex(world, system, index)
     for i = oldIndex, index, index >= oldIndex and 1 or -1 do
         systemIndices[systems[i]] = i
     end
-end
-
---- Activate a System in the World.
--- Activated Systems will be update whenever tiny.update(world, dt) is called.
--- @param world
--- @param system System to activate. The System must already be added to the
--- World.
-function tiny.activate(world, system)
-    system.active = true
-end
-
---- Deactivates a System in the World.
--- Deactivated Systems must be update manually, and will not update when the
--- rest of World updates. They will, however, process new Entities added while
--- the System is deactivated.
--- @param world
--- @param system System to deactivate. The System must already be added to the
--- World.
-function tiny.deactivate(world, system)
-    system.active = false
 end
 
 return tiny
