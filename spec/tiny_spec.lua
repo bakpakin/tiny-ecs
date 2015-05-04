@@ -97,7 +97,7 @@ describe('tiny-ecs:', function()
 
         local timePassed = 0
         local oneTimeSystem = tiny.system()
-        function oneTimeSystem:update(entities, dt)
+        function oneTimeSystem:update(dt)
             timePassed = timePassed + dt
         end
 
