@@ -174,9 +174,9 @@ local function sortedSystemOnModify(system, dt)
     local entityIndices = system.entityIndices
     local sortDelegate = system.sortDelegate
     if not sortDelegate then
-        local sort = system.sort
+        local compare = system.compare
         sortDelegate = function(e1, e2)
-            sort(system, e1, e2)
+            compare(system, e1, e2)
         end
         system.sortDelegate = sortDelegate
     end
@@ -197,7 +197,7 @@ end
 -- `function system:postProcess(entities, dt)` - returns nil,
 -- `function system:onAdd(entity)` - returns nil,
 -- `function system:onRemove(entity)` - returns nil,
--- `function system:sort(entity1, entity2)` - returns boolean.
+-- `function system:compare(entity1, entity2)` - returns boolean.
 -- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
 -- but one can write their own filters as well.
 -- @param table A table to be used as a System, or `nil` to create a new
@@ -207,6 +207,7 @@ function tiny.sortedSystem(table)
     table[systemTableKey] = true
     table.update = processingSystemUpdate
     table.onModify = sortedSystemOnModify
+    table.sort = sortedSystemOnModify
     return table
 end
 

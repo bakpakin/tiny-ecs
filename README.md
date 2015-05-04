@@ -62,7 +62,9 @@ end
 ```
 
 ## Use It ##
-Copy paste tiny.lua into your source folder.
+Copy paste tiny.lua into your source folder. For stability and consistent API,
+please use a tagged release or use luarocks. Tagged releases will have a version
+number in `tiny._VERSION`, while other commits will just have the string 'dev'.
 
 ## Luarocks ##
 Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
