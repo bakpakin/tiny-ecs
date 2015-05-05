@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "1.1-1" }
+local tiny = { _VERSION = "dev" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -33,6 +33,7 @@ local pairs = pairs
 local ipairs = ipairs
 local setmetatable = setmetatable
 local type = type
+local select = select
 
 -- Local versions of the library functions
 local tiny_manageEntities
@@ -74,6 +75,14 @@ local tiny_remove
 --
 --    print(f1(nil, e1), f1(nil, e2), f1(nil, e3)) -- prints true, false, false
 --    print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
+--
+-- Filters can also be passed as arguments to other Filter constructors. This is
+-- a powerful way to create complex, custom Filters that select a very specific
+-- set of Entities.
+--
+--    -- Selects Entities with an "image" Component, but not Entities with a
+--    -- "Player" or "Enemy" Component.
+--    filter = tiny.requireAll("image", tiny.rejectOne("Player", "Enemy"))
 --
 -- @section Filter
 
@@ -118,6 +127,50 @@ function tiny.requireOne(...)
             end
         end
         return false
+    end
+end
+
+--- Makes a Filter that rejects Entities with all specified Components and
+-- Filters, and selects all other Entities.
+-- @param ... List of required Components and other Filters.
+function tiny.rejectAll(...)
+    local components = {...}
+    local len = #components
+    return function(system, e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if type(c) == 'function' then
+                if not c(system, e) then
+                    return true
+                end
+            elseif e[c] == nil then
+                return true
+            end
+        end
+        return false
+    end
+end
+
+--- Makes a Filter that rejects Entities with at least one of the specified
+-- Components and Filters, and selects all other Entities.
+-- @param ... List of required Components and other Filters.
+function tiny.rejectOne(...)
+    local components = {...}
+    local len = #components
+    return function(system, e)
+        local c
+        for i = 1, len do
+            c = components[i]
+            if type(c) == 'function' then
+                if c(system, e) then
+                    return false
+                end
+            elseif e[c] ~= nil then
+                return false
+            end
+        end
+        return true
     end
 end
 
@@ -335,8 +388,9 @@ tiny_addSystem = tiny.addSystem
 -- @see addEntity
 -- @see addSystem
 function tiny.add(world, ...)
-    local args = {...}
-    for _, obj in ipairs(args) do
+    local obj
+    for i = 1, select("#", ...) do
+        obj = select(i, ...)
         if isSystem(obj) then
             tiny_addSystem(world, obj)
         else -- Assume obj is an Entity
@@ -370,8 +424,9 @@ tiny_removeSystem = tiny.removeSystem
 -- @see removeEntity
 -- @see removeSystem
 function tiny.remove(world, ...)
-    local args = {...}
-    for _, obj in ipairs(args) do
+    local obj
+    for i = 1, select("#", ...) do
+        obj = select(i, ...)
         if isSystem(obj) then
             tiny_removeSystem(world, obj)
         else -- Assume obj is an Entity
