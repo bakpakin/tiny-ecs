@@ -391,10 +391,12 @@ function tiny.add(world, ...)
     local obj
     for i = 1, select("#", ...) do
         obj = select(i, ...)
-        if isSystem(obj) then
-            tiny_addSystem(world, obj)
-        else -- Assume obj is an Entity
-            tiny_addEntity(world, obj)
+        if obj then
+            if isSystem(obj) then
+                tiny_addSystem(world, obj)
+            else -- Assume obj is an Entity
+                tiny_addEntity(world, obj)
+            end
         end
     end
 end
@@ -427,10 +429,12 @@ function tiny.remove(world, ...)
     local obj
     for i = 1, select("#", ...) do
         obj = select(i, ...)
-        if isSystem(obj) then
-            tiny_removeSystem(world, obj)
-        else -- Assume obj is an Entity
-           tiny_removeEntity(world, obj)
+        if obj then
+            if isSystem(obj) then
+                tiny_removeSystem(world, obj)
+            else -- Assume obj is an Entity
+               tiny_removeEntity(world, obj)
+            end
         end
     end
 end
