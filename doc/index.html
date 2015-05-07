@@ -65,16 +65,26 @@
  Filters.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#tiny.requireOne">tiny.requireOne (...)</a></td>
+	<td class="name" nowrap><a href="#tiny.requireAny">tiny.requireAny (...)</a></td>
 	<td class="summary">Makes a Filter that selects Entities with at least one of the specified
  Components and Filters.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.rejectAll">tiny.rejectAll (...)</a></td>
+	<td class="summary">Makes a Filter that rejects Entities with all specified Components and
+ Filters, and selects all other Entities.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.rejectAny">tiny.rejectAny (...)</a></td>
+	<td class="summary">Makes a Filter that rejects Entities with at least one of the specified
+ Components and Filters, and selects all other Entities.</td>
 	</tr>
 </table>
 <h2><a href="#System_functions">System functions </a></h2>
 <table class="function_list">
 	<tr>
 	<td class="name" nowrap><a href="#tiny.system">tiny.system (table)</a></td>
-	<td class="summary">Creates a System.</td>
+	<td class="summary">Creates a default System.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.processingSystem">tiny.processingSystem (table)</a></td>
@@ -129,11 +139,11 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.getEntityCount">tiny.getEntityCount (world)</a></td>
-	<td class="summary">Gets count of Entities in World.</td>
+	<td class="summary">Gets number of Entities in the World.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.getSystemCount">tiny.getSystemCount (world)</a></td>
-	<td class="summary">Gets count of Systems in World.</td>
+	<td class="summary">Gets number of Systems in World.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.getSystemIndex">tiny.getSystemIndex (world, system)</a></td>
@@ -156,11 +166,11 @@
  value indicating if the Entity should be processed by the System.</p>
 
 <p> Filters must be added to Systems by setting the <code>filter</code> field of the System.
- Filter&rsquo;s returned by <a href="index.html#tiny.requireAll">tiny.requireAll</a> and <a href="index.html#tiny.requireOne">tiny.requireOne</a> are immutable
+ Filter&rsquo;s returned by <a href="index.html#tiny.requireAll">tiny.requireAll</a> and <a href="index.html#tiny.requireAny">tiny.requireAny</a> are immutable
  and can be used by multiple Systems.</p>
 
 <pre><code>local f1 = tiny.requireAll("position", "velocity", "size")
-local f2 = tiny.requireOne("position", "velocity", "size")
+local f2 = tiny.requireAny("position", "velocity", "size")
 
 local e1 = {
     position = {2, 3},
@@ -180,6 +190,15 @@ local e3 = {
 
 print(f1(nil, e1), f1(nil, e2), f1(nil, e3)) -- prints true, false, false
 print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
+</code></pre>
+
+<p> Filters can also be passed as arguments to other Filter constructors. This is
+ a powerful way to create complex, custom Filters that select a very specific
+ set of Entities.</p>
+
+<pre><code>-- Selects Entities with an "image" Component, but not Entities with a
+-- "Player" or "Enemy" Component.
+filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
 </code></pre>
 
     <dl class="function">
@@ -205,8 +224,8 @@ print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
 
 </dd>
     <dt>
-    <a name = "tiny.requireOne"></a>
-    <strong>tiny.requireOne (...)</strong>
+    <a name = "tiny.requireAny"></a>
+    <strong>tiny.requireAny (...)</strong>
     </dt>
     <dd>
     Makes a Filter that selects Entities with at least one of the specified
@@ -225,17 +244,53 @@ print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
 
 
 </dd>
+    <dt>
+    <a name = "tiny.rejectAll"></a>
+    <strong>tiny.rejectAll (...)</strong>
+    </dt>
+    <dd>
+    Makes a Filter that rejects Entities with all specified Components and
+ Filters, and selects all other Entities.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+         List of required Components and other Filters.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "tiny.rejectAny"></a>
+    <strong>tiny.rejectAny (...)</strong>
+    </dt>
+    <dd>
+    Makes a Filter that rejects Entities with at least one of the specified
+ Components and Filters, and selects all other Entities.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+         List of required Components and other Filters.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
 </dl>
     <h2><a name="System_functions"></a>System functions </h2>
 
-         A System is a wrapper around function callbacks for manipulating Entities.
-    <dl class="function">
-    <dt>
-    <a name = "tiny.system"></a>
-    <strong>tiny.system (table)</strong>
-    </dt>
-    <dd>
-    <p>Creates a System.  Systems are tables that contain at least one method;
+        <p> A System is a wrapper around function callbacks for manipulating Entities.
+ Systems are implemented as tables that contain at least one method;
  an update function that takes parameters like so:</p>
 
 <ul>
@@ -253,9 +308,9 @@ print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
 </ul>
 
 
-<p> For Filters, it is conveient to use <a href="index.html#tiny.requireAll">tiny.requireAll</a> or <a href="index.html#tiny.requireOne">tiny.requireOne</a>,
- but one can write their own filters as well. Set the Filter of your System
- like so:</p>
+<p> For Filters, it is convenient to use <a href="index.html#tiny.requireAll">tiny.requireAll</a> or <a href="index.html#tiny.requireAny">tiny.requireAny</a>,
+ but one can write their own filters as well. Set the Filter of a System like
+ so:</p>
 
 <pre><code>system.filter = tiny.requireAll("a", "b", "c")
 </code></pre>
@@ -267,6 +322,32 @@ print(f2(nil, e1), f2(nil, e2), f2(nil, e3)) -- prints true, true, true
 end
 </code></pre>
 
+<p> All Systems also have a few important fields that are initialized when the
+ system is added to the World. A few are important, and few should be less
+ commonly used.</p>
+
+<ul>
+<li> The <code>active</code> flag is whether or not the System is updated automatically.
+Inactive Systems should be updated manually or not at all via
+<code>system:update(dt)</code>. Defaults to true.</li>
+<li> The &lsquo;entities&rsquo; field is an ordered list of Entities in the System. This
+list can be used to quickly iterate through all Entities in a System.</li>
+<li> The <code>indices</code> field is a table of Entity keys to their indices in the
+<code>entities</code> list. Most Systems can ignore this.</li>
+<li> The <code>modified</code> flag is an indicator if the System has been modified in
+the last update. If so, the <code>onModify</code> callback will be called on the System
+in the next update, if it has one. This is usually managed by tiny-ecs, so
+users should mostly ignore this, too.</li>
+</ul>
+
+
+    <dl class="function">
+    <dt>
+    <a name = "tiny.system"></a>
+    <strong>tiny.system (table)</strong>
+    </dt>
+    <dd>
+    Creates a default System.
 
 
     <h3>Parameters:</h3>
@@ -276,6 +357,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        A new System or System class
+    </ol>
 
 
 
@@ -316,6 +402,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        A new Processing System or Processing System class
+    </ol>
 
 
     <h3>See also:</h3>
@@ -352,6 +443,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        A new Sorted System or Sorted System class
+    </ol>
 
 
     <h3>See also:</h3>
@@ -368,10 +464,9 @@ end
          A World is a container that manages Entities and Systems. Typically, a
  program uses one World at a time.</p>
 
-<p> The tiny-ecs module is set to be the <code>__index</code> of all World tables, so the
- often clearer syntax of <code>world:method()</code> can be used for any function in the
- library. For example, <code>tiny.add(world, e1, e2, e3)</code> is the same as
- <code>world:add(e1, e2, e3).</code>
+<p> For all World functions except <code>tiny.world(&hellip;)</code>, object-oriented syntax can
+ be used instead of the documented syntax. For example,
+ <code>tiny.add(world, e1, e2, e3)</code> is the same as <code>world:add(e1, e2, e3)</code>.
     <dl class="function">
     <dt>
     <a name = "tiny.world"></a>
@@ -631,7 +726,7 @@ end
     <strong>tiny.getEntityCount (world)</strong>
     </dt>
     <dd>
-    Gets count of Entities in World.
+    Gets number of Entities in the World.
 
 
     <h3>Parameters:</h3>
@@ -642,6 +737,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        An integer
+    </ol>
 
 
 
@@ -652,7 +752,7 @@ end
     <strong>tiny.getSystemCount (world)</strong>
     </dt>
     <dd>
-    Gets count of Systems in World.
+    Gets number of Systems in World.
 
 
     <h3>Parameters:</h3>
@@ -663,6 +763,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        An integer
+    </ol>
 
 
 
@@ -689,6 +794,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        An integer between 1 and world:getSystemCount() inclusive
+    </ol>
 
 
 
@@ -720,6 +830,11 @@ end
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        Old index
+    </ol>
 
 
 
@@ -732,7 +847,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-05-04 20:16:58 </i>
+<i style="float:right;">Last updated 2015-05-07 19:57:49 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
