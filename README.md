@@ -5,7 +5,7 @@ for simulating large and complex systems. For more explanation on Entity
 Component Systems, here is some
 [basic info](http://en.wikipedia.org/wiki/Entity_component_system "Wikipedia").
 
-Tiny-ecs also works well with Objected Oriented programming in lua because
+Tiny-ecs also works well with objected oriented programming in lua because
 Systems and Entities do not use metatables. This means you can subclass your
 Systems and Entities, and use existing lua class frameworks with tiny-ecs, no problem.
 
@@ -29,7 +29,7 @@ Systems in tiny-ecs describe how to update Entities. Systems select certain Enti
 using a Filter, and then only update those select Entities. Some Systems don't
 update Entities, and instead just act as function callbacks every update. Tiny-ecs
 provides functions for creating Systems easily, as well as creating Systems that
-can be used in an Object Orientented fashion.
+can be used in an object orientented fashion.
 
 ### Filters ###
 Filters are used to select Entities. Filters can be any lua function, but
@@ -81,7 +81,8 @@ Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and 
 
 ## Documentation ##
 See API [here](http://bakpakin.github.io/tiny-ecs/doc/).
-Documentation can be generated locally with [LDoc](http://stevedonovan.github.io/ldoc/).
+For the most up-to-date documentation, read the source code, or generate the HTML
+locally with [LDoc](http://stevedonovan.github.io/ldoc/).
 
 ## TODO ##
 

@@ -176,18 +176,7 @@ end
 
 --- System functions.
 -- A System is a wrapper around function callbacks for manipulating Entities.
--- @section System
-
--- Use an empty table as a key for identifying Systems. Any table that contains
--- this key is considered a System rather than an Entity.
-local systemTableKey = { "SYSTEM_TABLE_KEY" }
-
--- Check if tables are systems.
-local function isSystem(table)
-    return table[systemTableKey]
-end
-
---- Creates a System. Systems are tables that contain at least one method;
+-- Systems are implemented as tables that contain at least one method;
 -- an update function that takes parameters like so:
 --
 --   * `function system:update(dt)`.
@@ -199,16 +188,45 @@ end
 --   * `function system:onRemove(entity)`
 --   * `function system:onModify(dt)`
 --
--- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireAny`,
--- but one can write their own filters as well. Set the Filter of your System
--- like so:
+-- For Filters, it is convenient to use `tiny.requireAll` or `tiny.requireAny`,
+-- but one can write their own filters as well. Set the Filter of a System like
+-- so:
 --    system.filter = tiny.requireAll("a", "b", "c")
 -- or
 --    function system:filter(entity)
 --        return entity.myRequiredComponentName ~= nil
 --    end
 --
+-- All Systems also have a few important fields that are initialized when the
+-- system is added to the World. A few are important, and few should be less
+-- commonly used.
+--
+--   * The `active` flag is whether or not the System is updated automatically.
+-- Inactive Systems should be updated manually or not at all via
+-- `system:update(dt)`. Defaults to true.
+--   * The 'entities' field is an ordered list of Entities in the System. This
+-- list can be used to quickly iterate through all Entities in a System.
+--   * The `indices` field is a table of Entity keys to their indices in the
+-- `entities` list. Most Systems can ignore this.
+--   * The `modified` flag is an indicator if the System has been modified in
+-- the last update. If so, the `onModify` callback will be called on the System
+-- in the next update, if it has one. This is usually managed by tiny-ecs, so
+-- users should mostly ignore this, too.
+--
+-- @section System
+
+-- Use an empty table as a key for identifying Systems. Any table that contains
+-- this key is considered a System rather than an Entity.
+local systemTableKey = { "SYSTEM_TABLE_KEY" }
+
+-- Check if tables are systems.
+local function isSystem(table)
+    return table[systemTableKey]
+end
+
+--- Creates a default System.
 -- @param table A table to be used as a System, or `nil` to create a new System.
+-- @return A new System or System class
 function tiny.system(table)
     table = table or {}
     table[systemTableKey] = true
@@ -257,6 +275,7 @@ end
 -- @param table A table to be used as a System, or `nil` to create a new
 -- Processing System.
 -- @see system
+-- @return A new Processing System or Processing System class
 function tiny.processingSystem(table)
     table = table or {}
     table[systemTableKey] = true
@@ -296,6 +315,7 @@ end
 -- Sorted System.
 -- @see system
 -- @see processingSystem
+-- @return A new Sorted System or Sorted System class
 function tiny.sortedSystem(table)
     table = table or {}
     table[systemTableKey] = true
@@ -309,13 +329,13 @@ end
 -- A World is a container that manages Entities and Systems. Typically, a
 -- program uses one World at a time.
 --
--- The tiny-ecs module is set to be the `__index` of all World tables, so the
--- often clearer syntax of `world:method()` can be used for any function in the
--- library. For example, `tiny.add(world, e1, e2, e3)` is the same as
--- `world:add(e1, e2, e3).`
+-- For all World functions except `tiny.world(...)`, object-oriented syntax can
+-- be used instead of the documented syntax. For example,
+-- `tiny.add(world, e1, e2, e3)` is the same as `world:add(e1, e2, e3)`.
 -- @section World
 
-local worldMetaTable = { __index = tiny }
+-- Forward declaration
+local worldMetaTable
 
 --- Creates a new World.
 -- Can optionally add default Systems and Entities.
@@ -646,14 +666,16 @@ function tiny.clearSystems(world)
     end
 end
 
---- Gets count of Entities in World.
+--- Gets number of Entities in the World.
 -- @param world
+-- @return An integer
 function tiny.getEntityCount(world)
     return world.entityCount
 end
 
---- Gets count of Systems in World.
+--- Gets number of Systems in World.
 -- @param world
+-- @return An integer
 function tiny.getSystemCount(world)
     return #(world.systems)
 end
@@ -662,6 +684,7 @@ end
 -- before higher indexed systems.
 -- @param world
 -- @param system
+-- @return An integer between 1 and world:getSystemCount() inclusive
 function tiny.getSystemIndex(world, system)
     return world.systemIndices[system]
 end
@@ -672,6 +695,7 @@ end
 -- @param world
 -- @param system
 -- @param index
+-- @return Old index
 function tiny.setSystemIndex(world, system, index)
     local systemIndices = world.systemIndices
     local oldIndex = systemIndices[system]
@@ -684,6 +708,26 @@ function tiny.setSystemIndex(world, system, index)
     for i = oldIndex, index, index >= oldIndex and 1 or -1 do
         systemIndices[systems[i]] = i
     end
+
+    return oldIndex
 end
+
+-- Construct world metatable.
+worldMetaTable = {
+    __index = {
+        add = tiny.add,
+        addEntity = tiny.addEntity,
+        addSystem = tiny.addSystem,
+        remove = tiny.remove,
+        removeEntity = tiny.removeEntity,
+        update = tiny.update,
+        clearEntities = tiny.clearEntities,
+        clearSystems = tiny.clearSystems,
+        getEntityCount = tiny.getEntityCount,
+        getSystemCount = tiny.getSystemCount,
+        getSystemIndex = tiny.getSystemIndex,
+        setSystemIndex = tiny.setSystemIndex
+    }
+}
 
 return tiny
