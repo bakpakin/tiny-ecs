@@ -51,11 +51,11 @@ local tiny_remove
 -- value indicating if the Entity should be processed by the System.
 --
 -- Filters must be added to Systems by setting the `filter` field of the System.
--- Filter's returned by `tiny.requireAll` and `tiny.requireOne` are immutable
+-- Filter's returned by `tiny.requireAll` and `tiny.requireAny` are immutable
 -- and can be used by multiple Systems.
 --
 --    local f1 = tiny.requireAll("position", "velocity", "size")
---    local f2 = tiny.requireOne("position", "velocity", "size")
+--    local f2 = tiny.requireAny("position", "velocity", "size")
 --
 --    local e1 = {
 --        position = {2, 3},
@@ -82,7 +82,7 @@ local tiny_remove
 --
 --    -- Selects Entities with an "image" Component, but not Entities with a
 --    -- "Player" or "Enemy" Component.
---    filter = tiny.requireAll("image", tiny.rejectOne("Player", "Enemy"))
+--    filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
 --
 -- @section Filter
 
@@ -111,7 +111,7 @@ end
 --- Makes a Filter that selects Entities with at least one of the specified
 -- Components and Filters.
 -- @param ... List of required Components and other Filters.
-function tiny.requireOne(...)
+function tiny.requireAny(...)
     local components = {...}
     local len = #components
     return function(system, e)
@@ -155,7 +155,7 @@ end
 --- Makes a Filter that rejects Entities with at least one of the specified
 -- Components and Filters, and selects all other Entities.
 -- @param ... List of required Components and other Filters.
-function tiny.rejectOne(...)
+function tiny.rejectAny(...)
     local components = {...}
     local len = #components
     return function(system, e)
@@ -199,7 +199,7 @@ end
 --   * `function system:onRemove(entity)`
 --   * `function system:onModify(dt)`
 --
--- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireOne`,
+-- For Filters, it is conveient to use `tiny.requireAll` or `tiny.requireAny`,
 -- but one can write their own filters as well. Set the Filter of your System
 -- like so:
 --    system.filter = tiny.requireAll("a", "b", "c")

@@ -56,10 +56,10 @@ describe('tiny-ecs:', function()
             local ftap = tiny.requireAll("spinalTap")
             local fvel = tiny.requireAll("vel")
             local fxform = tiny.requireAll("xform")
-            local fall = tiny.requireOne("spinalTap", "onlyTen", "littleMan")
+            local fall = tiny.requireAny("spinalTap", "onlyTen", "littleMan")
 
             -- Only select Entities without "spinalTap"
-            local frtap = tiny.rejectOne("spinalTap")
+            local frtap = tiny.rejectAny("spinalTap")
 
             -- Select Entities without all three: "spinalTap", "onlyTen", and
             -- "littleMan"
