@@ -8,6 +8,8 @@ Component Systems, here is some
 Tiny-ecs also works well with objected oriented programming in lua because
 Systems and Entities do not use metatables. This means you can subclass your
 Systems and Entities, and use existing lua class frameworks with tiny-ecs, no problem.
+For an example on how to use tiny-ecs with object-oriented lua, take a look at the
+demo branch, specifically the systems and entities sub-directories.
 
 ## Overview ##
 Tiny-ecs has four important types: Worlds, Filters, Systems, and Entities.
