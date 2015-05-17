@@ -5,11 +5,11 @@ function SpriteSystem:init(camera, layerFlag)
     self.filter = tiny.requireAll("sprite", "pos", layerFlag)
 end
 
-function SpriteSystem:preProcess(entities, dt)
+function SpriteSystem:preProcess(dt)
     self.camera:apply()
 end
 
-function SpriteSystem:postProcess(entities, dt)
+function SpriteSystem:postProcess(dt)
     self.camera:remove()
     love.graphics.setColor(255, 255, 255, 255)
 end

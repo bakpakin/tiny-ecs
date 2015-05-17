@@ -26,8 +26,8 @@ function Intro:load()
         require ("src.systems.TileMapRenderSystem")(camera, tileMap),
         require ("src.systems.SpriteSystem")(camera, "bg"),
         require ("src.systems.SpriteSystem")(camera, "fg"),
-        require ("src.systems.HudSystem")(self, "hudBg"),
-        require ("src.systems.HudSystem")(self, "hudFg"),
+        require ("src.systems.HudSystem")("hudBg"),
+        require ("src.systems.HudSystem")("hudFg"),
         TransitionScreen(),
         ScreenSplash(0.5, 0.2, "Cammando Kibbles"),
         ScreenSplash(0, 0, "Created by bakpakin for Ludum Dare 32", 300, assets.fnt_reallysmallhud, "left", 20, 20),
@@ -41,8 +41,8 @@ end
 function Intro:update(dt)
 	self.time = self.time + dt
 	if love.keyboard.isDown(" ") and self.time > 0.55 then
-		world:add(TransitionScreen(true, Level("assets/lvl1"))) 
-	end	
+		world:add(TransitionScreen(true, Level("assets/lvl1")))
+	end
 end
 
 function Intro:draw()

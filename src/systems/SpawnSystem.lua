@@ -9,7 +9,7 @@ function SpawnSystem:init(levelState)
 	self.time = 0
 end
 
-function SpawnSystem:update(entities, dt)
+function SpawnSystem:update(dt)
 	self.time = self.time + dt
 	local levelState = self.levelState
 	if levelState.isSpawning and levelState.enemiesSpawned < levelState.totalEnemiesToKill and self.time >= levelState.spawnInterval then

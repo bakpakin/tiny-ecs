@@ -9,7 +9,7 @@ function TileMapRenderSystem:init(camera, tileMap)
     end
 end
 
-function TileMapRenderSystem:update(entities, dt)
+function TileMapRenderSystem:update(dt)
 	self.camera:draw(self.drawFn)
 end
 

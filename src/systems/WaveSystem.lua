@@ -2,7 +2,7 @@ local TimerEvent = require "src.entities.TimerEvent"
 
 local WaveSystem = tiny.system(class "WaveSystem")
 
-WaveSystem.filter = tiny.requireOne("isEnemy")
+WaveSystem.filter = tiny.requireAll("isEnemy")
 
 function WaveSystem:init(levelState)
 	self.levelState = levelState
@@ -21,7 +21,5 @@ function WaveSystem:onRemove(e)
 		end))
 	end
 end
-
-function WaveSystem:update(entities, dt) end
 
 return WaveSystem
