@@ -7,8 +7,8 @@ end
 AISystem.filter = tiny.requireAll("ai", "pos", "platforming")
 
 function AISystem:process(e, dt)
-    if not self.target then 
-        return 
+    if not self.target then
+        return
     end
     local targetx = self.target.pos.x
     local pos = e.pos

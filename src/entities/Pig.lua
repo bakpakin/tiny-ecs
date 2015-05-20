@@ -25,9 +25,9 @@ function Pig:init(x, y, target)
     }
 
     self.ai = {
-    	
+
 	}
-    
+
 	self.hitbox = {w = 30, h = 21}
 	self.health = 50
     self.maxHealth = 50
@@ -40,7 +40,7 @@ function Pig:init(x, y, target)
 end
 
 function Pig:gotHit()
-    if self.isAlive then 
+    if self.isAlive then
         self.isAlive = nil
     	self.lifetime = 0.25
         self.fadeTime = 0.25

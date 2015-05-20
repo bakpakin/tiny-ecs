@@ -18,7 +18,7 @@ local function collisionFilter(e1, e2)
         if e2.isPlayer then return 'cross' end
     elseif e1.isBullet then
         if e2.isPlayer or e2.isBullet then return nil end
-    end 
+    end
     if e1.isSolid then
         if type(e2) == "string" then -- tile collision
             if e2:byte(1) == oneWayPrefix then -- one way tile
@@ -86,8 +86,8 @@ function BumpPhysicsSystem:process(e, dt)
             end
         end
 
-        if e.onCollision and collided then 
-            e:onCollision(col) 
+        if e.onCollision and collided then
+            e:onCollision(col)
         end
     end
 end

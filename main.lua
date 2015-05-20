@@ -33,7 +33,7 @@ end
 function love.draw()
 	if paused then
 		love.graphics.setColor(90, 90, 90, 255)
-		love.graphics.draw(pauseCanvas, 0, 0)	
+		love.graphics.draw(pauseCanvas, 0, 0)
 		love.graphics.setColor(255, 255, 255, 255)
 		love.graphics.setFont(assets.fnt_hud)
 		love.graphics.printf("Paused - P to Resume", love.graphics.getWidth() * 0.5 - 125, love.graphics.getHeight() * 0.4, 250, "center")
@@ -93,7 +93,7 @@ beholder.observe("keypress", "\\", function()
 	local fs = love.window.getFullscreen()
 	if fs then
 		love.window.setMode(900, 600, {resizable = true})
-	else 
+	else
 		local w, h = love.window.getDesktopDimensions()
 		love.window.setMode(w, h, {fullscreen = true, })
 	end

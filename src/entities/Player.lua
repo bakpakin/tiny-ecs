@@ -9,7 +9,7 @@ local Player = class("Player")
 
 function Player:draw(dt)
     if self.hasGun then
-        local p = self.animation.position 
+        local p = self.animation.position
         local dy = (p ~= 2 and p ~= 3) and 0 or -1
         local dx = self.platforming.direction == 'l' and 2 or -2
         love.graphics.draw(assets.img_gun, self.pos.x + 16 + dx, self.pos.y + 10 + dy, self.gunAngle - math.pi / 4)
@@ -30,7 +30,7 @@ function Player:onHit()
     world:add(self)
     local n = gamestate.current().score
     local message = "You Died."
-    if n == 0 then message = "You Failed Pretty Hard." 
+    if n == 0 then message = "You Failed Pretty Hard."
     elseif n < 10 then message = "You Killed Some Pigs and They Killed you Back."
     elseif n < 30 then message = "That's a lot of Bacon."
     elseif n < 100 then message = "You a crazy Pig Killer."
