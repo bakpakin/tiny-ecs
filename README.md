@@ -31,7 +31,7 @@ Systems in tiny-ecs describe how to update Entities. Systems select certain Enti
 using a Filter, and then only update those select Entities. Some Systems don't
 update Entities, and instead just act as function callbacks every update. Tiny-ecs
 provides functions for creating Systems easily, as well as creating Systems that
-can be used in an object orientented fashion.
+can be used in an object oriented fashion.
 
 ### Filters ###
 Filters are used to select Entities. Filters can be any lua function, but
@@ -66,7 +66,7 @@ end
 ## Use It ##
 Copy paste tiny.lua into your source folder. For stability and consistent API,
 please use a tagged release or use luarocks. Tagged releases will have a version
-number in `tiny._VERSION`, while other commits will just have the string 'dev'.
+number in `tiny._VERSION`, while other commits will just have the string 'scm'.
 
 ## Luarocks ##
 Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
@@ -85,10 +85,3 @@ Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and 
 See API [here](http://bakpakin.github.io/tiny-ecs/doc/).
 For the most up-to-date documentation, read the source code, or generate the HTML
 locally with [LDoc](http://stevedonovan.github.io/ldoc/).
-
-## TODO ##
-
-* More testing
-* Performance testing / optimization
-* Add more System types
-* Improve Documentation
