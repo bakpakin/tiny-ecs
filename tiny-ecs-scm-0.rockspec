@@ -1,5 +1,5 @@
 package = "tiny-ecs"
-version = "scm"
+version = "scm-0"
 source = {
     url = "git://github.com/bakpakin/tiny-ecs",
 }
