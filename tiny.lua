@@ -720,6 +720,7 @@ worldMetaTable = {
         addSystem = tiny.addSystem,
         remove = tiny.remove,
         removeEntity = tiny.removeEntity,
+        removeSystem = tiny.removeSystem,
         update = tiny.update,
         clearEntities = tiny.clearEntities,
         clearSystems = tiny.clearSystems,
