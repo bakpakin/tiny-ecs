@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "1.1-3" }
+local tiny = { _VERSION = "scm" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -505,7 +505,9 @@ function tiny_manageSystems(world)
                 entityIndices = {}
                 system.entities = entityList
                 system.indices = entityIndices
-                system.active = true
+                if system.active == nil then
+                    system.active = true
+                end
                 system.modified = true
                 index = #systems + 1
                 systemIndices[system] = index
