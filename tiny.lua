@@ -621,7 +621,10 @@ end
 -- Put this in your main loop.
 -- @param world
 -- @param dt Delta time
-function tiny.update(world, dt)
+-- @param filter (Optional) A Filter that selects Systems as if they were
+-- Entities, and only updates selected Systems. By default, all Systems are
+-- updated.
+function tiny.update(world, dt, filter)
 
     tiny_manageSystems(world)
     tiny_manageEntities(world)
@@ -632,7 +635,7 @@ function tiny.update(world, dt)
     --  Iterate through Systems IN ORDER
     for i = 1, #systems do
         system = systems[i]
-        if system.active then
+        if system.active and ((not filter) or filter(world, system)) then
 
             -- Call the modify callback on Systems that have been modified.
             onModify = system.onModify
