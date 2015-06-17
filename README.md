@@ -1,4 +1,7 @@
 # tiny-ecs #
+
+[![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
+
 Tiny-ecs is an Entity Component System for lua that's simple, flexible, and useful.
 Because of lua's tabular nature, Entity Component Systems are a natural choice
 for simulating large and complex systems. For more explanation on Entity
