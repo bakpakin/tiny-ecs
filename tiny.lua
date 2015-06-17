@@ -268,18 +268,41 @@ local function sortedSystemOnModify(system, dt)
 end
 
 -- Update function for Interval Systems.
-local function intervalSystemUpdate(system, dt)
+local function intervalSystemIntervalUpdate(system, dt)
     local interval = self.interval or 1
-    local intervalUpdate = self.intervalUpdate
+    local update = self.update
     local bufferedTime = (self.bufferedTime or 0) + dt
     while bufferedTime >= interval do
         bufferedTime = bufferedTime - interval
-        intervalUpdate(system, interval)
+        update(system, interval)
     end
     self.bufferedTime = bufferedTime
 end
 
---- Creates a new System.
+--- Creates a new System. An optinal list of attributes may be passed to specify
+-- the behavior of the System. Currently, the three supported attributes are
+-- `"process"`, `"sorted"`, and `"interval"`.
+--
+--   * `"process"` marks the new System as a Processing System. Processing
+-- Systems process each entity individual, and are usually what is needed.
+-- Processing Systems have three extra callbacks compared to a vanilla System.
+--     * `function system:preProcess(entities, dt)` Called before iterating over
+-- each Entity.
+--     * `function system:postProcess(entities, dt)` Called for each Entity in
+-- the System.
+--     * `function system:process(entity, dt)` Called after iteration.
+-- Processing Systems have their own `update` method, so don't implement a
+-- a custom `update` callback for Processing Systems.
+--   * `"sorted"` marks the new System as a Sorted System. Sorted Systems sort
+-- their Entities according to a user-defined method, `system:compare(e1, e2)`,
+-- which should return true if `e1` should come before `e2` and false otherwise.
+--     * `"interval"` marks the new System as an Interval System. Interval
+-- Systems are updated regulary according to an interval rather than every time
+-- the world is update. This is useful for Systems that don't need to be updated
+-- to often or need be deterministic. Interval Systems have a user-defined field
+-- `interval` that is the time interval between updates. If no interval is
+-- specified, a default of 1 is used.
+--
 -- @param table A table to be used as a System, or `nil` to create a new System.
 -- @param attributes An optional list of System attributes.
 -- @return A new System or System class
@@ -295,10 +318,8 @@ function tiny.system(table, attributes)
     end
 
     -- Set up Interval Systems.
-    local updateMethodName = "update"
     if attributesMap.interval then
-        table.update = intervalSystemUpdate
-        updateMethodName = "intervalSystemUpdate"
+        table.intervalUpdate = intervalSystemIntervalUpdate
     end
 
     -- Set up Sorted Systems.
@@ -308,56 +329,9 @@ function tiny.system(table, attributes)
 
     -- Set up Processing Systems.
     if attributesMap.process then
-        table[updateMethodName] = processingSystemUpdate
+        table.update = processingSystemUpdate
     end
 
-    return table
-end
-
---- Creates a Processing System.
---
--- A Processing System iterates through its Entities in no particluar order, and
--- updates them individually. It has two important fields:
---
---   * `function system:process(entity, dt)`
---   * `function system:filter(entity)`
---
--- There are also a few other optional callbacks, including the optional
--- callbacks in `tiny.system`:
---
---   * `function system:preProcess(entities, dt)`
---   * `function system:postProcess(entities, dt)`
---
--- @param table A table to be used as a System, or `nil` to create a new
--- Processing System.
--- @see system
--- @return A new Processing System or Processing System class
-function tiny.processingSystem(table)
-    table = table or {}
-    table[systemTableKey] = true
-    table.update = processingSystemUpdate
-    return table
-end
-
---- Creates a Sorted Processing System. A Sorted System iterates through its
--- Entities in a specific order, and updates them individually. It has three
--- important methods:
---
---   * `function system:process(entity, dt)`
---   * `function system:compare(entity1, entity2)`
---   * `function system:filter(entity)`
---
--- Sorted Systems have the same optitonal callbacks as ProcessingSystems.
--- @param table A table to be used as a System, or `nil` to create a new
--- Sorted System.
--- @see system
--- @see processingSystem
--- @return A new Sorted System or Sorted System class
-function tiny.sortedSystem(table)
-    table = table or {}
-    table[systemTableKey] = true
-    table.update = processingSystemUpdate
-    table.onModify = sortedSystemOnModify
     return table
 end
 
@@ -680,7 +654,7 @@ function tiny.update(world, dt, filter)
             end
 
             --Update Systems that have an update method (most Systems)
-            update = system.update
+            update = system.intervalUpdate or system.update
             if update then
                 update(system, dt)
             end
