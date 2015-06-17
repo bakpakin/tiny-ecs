@@ -28,7 +28,7 @@ del,ins {
     text-decoration: none;
 }
 li {
-    list-style: bullet;
+    list-style: disc;
     margin-left: 20px;
 }
 caption,th {
@@ -114,24 +114,18 @@ p.name {
     padding-top: 1em;
 }
 
-pre.example {
-    background-color: rgb(245, 245, 245);
-    border: 1px solid silver;
-    padding: 10px;
-    margin: 10px 0 10px 0;
-    font-family: "Andale Mono", monospace;
-    font-size: .85em;
-}
-
 pre {
-    background-color: rgb(245,245,255); // rgb(245, 245, 245);
-    border: 1px solid #cccccc; //silver;
+    background-color: rgb(245, 245, 245);
+    border: 1px solid #C0C0C0; /* silver */
     padding: 10px;
     margin: 10px 0 10px 0;
     overflow: auto;
     font-family: "Andale Mono", monospace;
 }
 
+pre.example {
+    font-size: .85em;
+}
 
 table.index { border: 1px #00007f; }
 table.index td { text-align: left; vertical-align: top; }
@@ -299,6 +293,7 @@ a:target + * {
   background-color: #FF9;
 }
 
+
 /* styles for prettification of source */
 pre .comment { color: #558817; }
 pre .constant { color: #a8660d; }
@@ -311,5 +306,7 @@ pre .number { color: #f8660d; }
 pre .operator { color: #2239a8; font-weight: bold; }
 pre .preprocessor, pre .prepro { color: #a33243; }
 pre .global { color: #800080; }
+pre .user-keyword { color: #800080; }
 pre .prompt { color: #558817; }
 pre .url { color: #272fc2; text-decoration: underline; }
+
