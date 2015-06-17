@@ -334,6 +334,11 @@ function tiny.system(table, attributes)
     return table
 end
 
+--- Get number of Entities in the System.
+function tiny.getSystemEntityCount(system)
+    return #(system.entities)
+end
+
 --- World functions.
 -- A World is a container that manages Entities and Systems. Typically, a
 -- program uses one World at a time.
