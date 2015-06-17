@@ -334,6 +334,16 @@ function tiny.system(table, attributes)
     return table
 end
 
+--- Creates a new Processing System or Processing System class. Shortcut for
+-- `tiny.system(table, { "process" })`.
+-- @see system
+function tiny.processingSystem(table)
+    table = table or {}
+    table[systemTableKey] = true
+    table.update = processingSystemUpdate
+    return table
+end
+
 --- Get number of Entities in the System.
 function tiny.getSystemEntityCount(system)
     return #(system.entities)
@@ -354,7 +364,6 @@ local worldMetaTable
 --- Creates a new World.
 -- Can optionally add default Systems and Entities.
 function tiny.world(...)
-
     local ret = {
 
         -- List of Entities to add
@@ -388,7 +397,6 @@ function tiny.world(...)
     tiny_manageEntities(ret)
 
     return setmetatable(ret, worldMetaTable)
-
 end
 
 --- Adds an Entity to the world.
@@ -411,8 +419,6 @@ end
 tiny_addSystem = tiny.addSystem
 
 --- Shortcut for adding multiple Entities and Systems to the World.
--- @see addEntity
--- @see addSystem
 function tiny.add(world, ...)
     local obj
     for i = 1, select("#", ...) do
@@ -443,8 +449,6 @@ end
 tiny_removeSystem = tiny.removeSystem
 
 --- Shortcut for removing multiple Entities and Systems from the World.
--- @see removeEntity
--- @see removeSystem
 function tiny.remove(world, ...)
     local obj
     for i = 1, select("#", ...) do
@@ -462,7 +466,6 @@ tiny_remove = tiny.remove
 
 -- Adds and removes Systems that have been marked from the World.
 function tiny_manageSystems(world)
-
         local s2a, s2r = world.systemsToAdd, world.systemsToRemove
 
         -- Early exit
@@ -531,12 +534,10 @@ function tiny_manageSystems(world)
             end
             s2a[i] = nil
         end
-
 end
 
 -- Adds and removes Entities that have been marked.
 function tiny_manageEntities(world)
-
     local e2a, e2r = world.entitiesToAdd, world.entitiesToRemove
 
     -- Early exit
@@ -582,7 +583,6 @@ function tiny_manageEntities(world)
         e2r[i] = nil
     end
 
-
     -- Add Entities
     for i = 1, #e2a do
         entity = e2a[i]
@@ -614,7 +614,6 @@ function tiny_manageEntities(world)
 
     -- Update Entity count
     world.entityCount = entityCount
-
 end
 
 --- Updates the World by dt (delta time). Takes an optional parameter, `filter`,
