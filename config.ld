@@ -10,3 +10,4 @@ style = '!fixed'
 package = 'tiny-ecs'
 not_luadoc = true
 boilerplate = true
+no_return_or_parms = true

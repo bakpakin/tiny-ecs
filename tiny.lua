@@ -87,7 +87,6 @@ local tiny_remove
 
 --- Makes a Filter that selects Entities with all specified Components and
 -- Filters.
--- @param ... List of required Components and other Filters.
 function tiny.requireAll(...)
     local components = {...}
     local len = #components
@@ -109,7 +108,6 @@ end
 
 --- Makes a Filter that selects Entities with at least one of the specified
 -- Components and Filters.
--- @param ... List of required Components and other Filters.
 function tiny.requireAny(...)
     local components = {...}
     local len = #components
@@ -131,7 +129,6 @@ end
 
 --- Makes a Filter that rejects Entities with all specified Components and
 -- Filters, and selects all other Entities.
--- @param ... List of required Components and other Filters.
 function tiny.rejectAll(...)
     local components = {...}
     local len = #components
@@ -153,7 +150,6 @@ end
 
 --- Makes a Filter that rejects Entities with at least one of the specified
 -- Components and Filters, and selects all other Entities.
--- @param ... List of required Components and other Filters.
 function tiny.rejectAny(...)
     local components = {...}
     local len = #components
@@ -182,10 +178,15 @@ end
 --
 -- There are also a few other optional callbacks:
 --
---   * `function system:filter(entity)`
---   * `function system:onAdd(entity)`
---   * `function system:onRemove(entity)`
---   * `function system:onModify(dt)`
+--   * `function system:filter(entity)` - Returns true if this System should
+-- include this Entity, otherwise should return false. If this isn't specified,
+-- no Entities are included in the System.
+--   * `function system:onAdd(entity)` - Called when an Entity is added to the
+-- System.
+--   * `function system:onRemove(entity)` - Called when an Entity is removed
+-- from the System.
+--   * `function system:onModify(dt)` - Called when the System is modified by
+-- adding or removing Entities from the System.
 --
 -- For Filters, it is convenient to use `tiny.requireAll` or `tiny.requireAny`,
 -- but one can write their own filters as well. Set the Filter of a System like
@@ -218,7 +219,7 @@ end
 -- this key is considered a System rather than an Entity.
 local systemTableKey = { "SYSTEM_TABLE_KEY" }
 
--- Check if tables are systems.
+-- Checks if a table is a System.
 local function isSystem(table)
     return table[systemTableKey]
 end
@@ -279,33 +280,31 @@ local function intervalSystemIntervalUpdate(system, dt)
     self.bufferedTime = bufferedTime
 end
 
---- Creates a new System. An optinal list of attributes may be passed to specify
--- the behavior of the System. Currently, the three supported attributes are
--- `"process"`, `"sorted"`, and `"interval"`.
+--- Creates a new System or System class. An optinal list of attributes may be
+-- passed to specify the behavior of the System. Currently, the three supported
+-- attributes are `"process"`, `"sorted"`, and `"interval"`.
 --
 --   * `"process"` marks the new System as a Processing System. Processing
 -- Systems process each entity individual, and are usually what is needed.
 -- Processing Systems have three extra callbacks compared to a vanilla System.
---     * `function system:preProcess(entities, dt)` Called before iterating over
--- each Entity.
---     * `function system:postProcess(entities, dt)` Called for each Entity in
+--     * `function system:preProcess(entities, dt)` - Called before iterating
+-- over each Entity.
+--     * `function system:postProcess(entities, dt)` - Called for each Entity in
 -- the System.
---     * `function system:process(entity, dt)` Called after iteration.
+--     * `function system:process(entity, dt)` - Called after iteration.
 -- Processing Systems have their own `update` method, so don't implement a
 -- a custom `update` callback for Processing Systems.
 --   * `"sorted"` marks the new System as a Sorted System. Sorted Systems sort
 -- their Entities according to a user-defined method, `system:compare(e1, e2)`,
 -- which should return true if `e1` should come before `e2` and false otherwise.
---     * `"interval"` marks the new System as an Interval System. Interval
+--   * `"interval"` marks the new System as an Interval System. Interval
 -- Systems are updated regulary according to an interval rather than every time
 -- the world is update. This is useful for Systems that don't need to be updated
--- to often or need be deterministic. Interval Systems have a user-defined field
+-- often or need be deterministic. Interval Systems have a user-defined field
 -- `interval` that is the time interval between updates. If no interval is
 -- specified, a default of 1 is used.
 --
--- @param table A table to be used as a System, or `nil` to create a new System.
--- @param attributes An optional list of System attributes.
--- @return A new System or System class
+-- If `table` is `nil`, this function uses an empty table.
 function tiny.system(table, attributes)
     table = table or {}
     table[systemTableKey] = true
@@ -349,8 +348,6 @@ local worldMetaTable
 
 --- Creates a new World.
 -- Can optionally add default Systems and Entities.
--- @param ... Systems and Entities to add to the World
--- @return A new World
 function tiny.world(...)
 
     local ret = {
@@ -392,8 +389,6 @@ end
 --- Adds an Entity to the world.
 -- Also call this on Entities that have changed Components such that they
 -- match different Filters.
--- @param world
--- @param entity
 function tiny.addEntity(world, entity)
     local e2a = world.entitiesToAdd
     e2a[#e2a + 1] = entity
@@ -404,8 +399,6 @@ end
 tiny_addEntity = tiny.addEntity
 
 --- Adds a System to the world.
--- @param world
--- @param system
 function tiny.addSystem(world, system)
     local s2a = world.systemsToAdd
     s2a[#s2a + 1] = system
@@ -413,8 +406,6 @@ end
 tiny_addSystem = tiny.addSystem
 
 --- Shortcut for adding multiple Entities and Systems to the World.
--- @param world
--- @param ... Systems and Entities
 -- @see addEntity
 -- @see addSystem
 function tiny.add(world, ...)
@@ -433,8 +424,6 @@ end
 tiny_add = tiny.add
 
 --- Removes an Entity to the World.
--- @param world
--- @param entity
 function tiny.removeEntity(world, entity)
     local e2r = world.entitiesToRemove
     e2r[#e2r + 1] = entity
@@ -442,8 +431,6 @@ end
 tiny_removeEntity = tiny.removeEntity
 
 --- Removes a System from the world.
--- @param world
--- @param system
 function tiny.removeSystem(world, system)
     local s2r = world.systemsToRemove
     s2r[#s2r + 1] = system
@@ -451,8 +438,6 @@ end
 tiny_removeSystem = tiny.removeSystem
 
 --- Shortcut for removing multiple Entities and Systems from the World.
--- @param world
--- @param ... Systems and Entities
 -- @see removeEntity
 -- @see removeSystem
 function tiny.remove(world, ...)
@@ -627,13 +612,9 @@ function tiny_manageEntities(world)
 
 end
 
---- Updates the World.
--- Put this in your main loop.
--- @param world
--- @param dt Delta time
--- @param filter (Optional) A Filter that selects Systems as if they were
--- Entities, and only updates selected Systems. By default, all Systems are
--- updated.
+--- Updates the World by dt (delta time). Takes an optional parameter, `filter`,
+-- which is a Filter that selects Systems from the World. Only selected Systems
+-- are updated. Put this function in your main loop.
 function tiny.update(world, dt, filter)
 
     tiny_manageSystems(world)
@@ -665,7 +646,6 @@ function tiny.update(world, dt, filter)
 end
 
 --- Removes all Entities from the World.
--- @param world
 function tiny.clearEntities(world)
     for e in pairs(world.entities) do
         tiny_removeEntity(world, e)
@@ -673,7 +653,6 @@ function tiny.clearEntities(world)
 end
 
 --- Removes all Systems from the World.
--- @param world
 function tiny.clearSystems(world)
     local systems = world.systems
     for i = #systems, 1, -1 do
@@ -682,35 +661,24 @@ function tiny.clearSystems(world)
 end
 
 --- Gets number of Entities in the World.
--- @param world
--- @return An integer
 function tiny.getEntityCount(world)
     return world.entityCount
 end
 
 --- Gets number of Systems in World.
--- @param world
--- @return An integer
 function tiny.getSystemCount(world)
     return #(world.systems)
 end
 
 --- Gets the index of a System in the World. Lower indexed Systems are processed
 -- before higher indexed systems.
--- @param world
--- @param system
--- @return An integer between 1 and world:getSystemCount() inclusive
 function tiny.getSystemIndex(world, system)
     return world.systemIndices[system]
 end
 
---- Sets the index of a System in the World. Changes the order in
--- which they Systems processed, because lower indexed Systems are processed
--- first.
--- @param world
--- @param system
--- @param index
--- @return Old index
+--- Sets the index of a System in the World, and returns the old index. Changes
+-- the order in which they Systems processed, because lower indexed Systems are
+-- processed first.
 function tiny.setSystemIndex(world, system, index)
     local systemIndices = world.systemIndices
     local oldIndex = systemIndices[system]
