@@ -30,7 +30,6 @@ local tinsert = table.insert
 local tremove = table.remove
 local tsort = table.sort
 local pairs = pairs
-local ipairs = ipairs
 local setmetatable = setmetatable
 local type = type
 local select = select
@@ -224,15 +223,6 @@ local function isSystem(table)
     return table[systemTableKey]
 end
 
---- Creates a default System.
--- @param table A table to be used as a System, or `nil` to create a new System.
--- @return A new System or System class
-function tiny.system(table)
-    table = table or {}
-    table[systemTableKey] = true
-    return table
-end
-
 -- Update function for all Processing Systems.
 local function processingSystemUpdate(system, dt)
     local entities = system.entities
@@ -256,6 +246,72 @@ local function processingSystemUpdate(system, dt)
     if postProcess then
         postProcess(system, dt)
     end
+end
+
+-- Sorts Systems by a function system.sort(entity1, entity2) on modify.
+local function sortedSystemOnModify(system, dt)
+    local entities = system.entities
+    local entityIndices = system.entityIndices
+    local sortDelegate = system.sortDelegate
+    if not sortDelegate then
+        local compare = system.compare
+        sortDelegate = function(e1, e2)
+            return compare(system, e1, e2)
+        end
+        system.sortDelegate = sortDelegate
+    end
+    tsort(entities, sortDelegate)
+    for i = 1, #entities do
+        local entity = entities[i]
+        entityIndices[entity] = i
+    end
+end
+
+-- Update function for Interval Systems.
+local function intervalSystemUpdate(system, dt)
+    local interval = self.interval or 1
+    local intervalUpdate = self.intervalUpdate
+    local bufferedTime = (self.bufferedTime or 0) + dt
+    while bufferedTime >= interval do
+        bufferedTime = bufferedTime - interval
+        intervalUpdate(system, interval)
+    end
+    self.bufferedTime = bufferedTime
+end
+
+--- Creates a new System.
+-- @param table A table to be used as a System, or `nil` to create a new System.
+-- @param attributes An optional list of System attributes.
+-- @return A new System or System class
+function tiny.system(table, attributes)
+    table = table or {}
+    table[systemTableKey] = true
+
+    -- Get attributes into a table as the keys.
+    attributes = attributes or {}
+    attributesMap = {}
+    for i = 1, #attributes do
+        attributesMap[attributes[i]] = true
+    end
+
+    -- Set up Interval Systems.
+    local updateMethodName = "update"
+    if attributesMap.interval then
+        table.update = intervalSystemUpdate
+        updateMethodName = "intervalSystemUpdate"
+    end
+
+    -- Set up Sorted Systems.
+    if attributesMap.sorted then
+        table.onModify = sortedSystemOnModify
+    end
+
+    -- Set up Processing Systems.
+    if attributesMap.process then
+        table[updateMethodName] = processingSystemUpdate
+    end
+
+    return table
 end
 
 --- Creates a Processing System.
@@ -283,25 +339,6 @@ function tiny.processingSystem(table)
     return table
 end
 
--- Sorts Systems by a function system.sort(entity1, entity2) on modify.
-local function sortedSystemOnModify(system, dt)
-    local entities = system.entities
-    local entityIndices = system.entityIndices
-    local sortDelegate = system.sortDelegate
-    if not sortDelegate then
-        local compare = system.compare
-        sortDelegate = function(e1, e2)
-            compare(system, e1, e2)
-        end
-        system.sortDelegate = sortDelegate
-    end
-    tsort(entities, sortDelegate)
-    for i = 1, #entities do
-        local entity = entities[i]
-        entityIndices[entity] = i
-    end
-end
-
 --- Creates a Sorted Processing System. A Sorted System iterates through its
 -- Entities in a specific order, and updates them individually. It has three
 -- important methods:
@@ -321,7 +358,6 @@ function tiny.sortedSystem(table)
     table[systemTableKey] = true
     table.update = processingSystemUpdate
     table.onModify = sortedSystemOnModify
-    table.sort = sortedSystemOnModify
     return table
 end
 

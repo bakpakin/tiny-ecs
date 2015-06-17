@@ -91,7 +91,7 @@ describe('tiny-ecs:', function()
 
         local world, entity1, entity2, entity3
 
-        local moveSystem = tiny.processingSystem()
+        local moveSystem = tiny.system({}, {"process"})
         moveSystem.filter = tiny.requireAll("xform", "vel")
         function moveSystem:process(e, dt)
             local xform = e.xform
