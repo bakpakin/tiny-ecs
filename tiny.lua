@@ -270,14 +270,16 @@ end
 
 -- Update function for Interval Systems.
 local function intervalSystemIntervalUpdate(system, dt)
-    local interval = self.interval or 1
-    local update = self.update
-    local bufferedTime = (self.bufferedTime or 0) + dt
+    local interval = system.interval or 1
+    local update = system.update
+    local bufferedTime = (system.bufferedTime or 0) + dt
     while bufferedTime >= interval do
         bufferedTime = bufferedTime - interval
-        update(system, interval)
+        if update then
+            update(system, interval)
+        end
     end
-    self.bufferedTime = bufferedTime
+    system.bufferedTime = bufferedTime
 end
 
 --- Creates a new System or System class. An optinal list of attributes may be
