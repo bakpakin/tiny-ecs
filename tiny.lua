@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "2.0-1" }
+local tiny = { _VERSION = "scm" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -201,6 +201,8 @@ end
 -- system is added to the World. A few are important, and few should be less
 -- commonly used.
 --
+--   * The `world` field points to the World that the System belongs to. Useful
+-- for adding and removing Entities from the world dynamically via the System.
 --   * The `active` flag is whether or not the System is updated automatically.
 -- Inactive Systems should be updated manually or not at all via
 -- `system:update(dt)`. Defaults to true.
@@ -500,6 +502,11 @@ function tiny_manageSystems(world)
                 end
             end
             s2r[i] = nil
+
+            -- Clean up System
+            system.world = nil
+            system.entities = nil
+            system.indices = nil
         end
 
         -- Add Systems
@@ -514,6 +521,7 @@ function tiny_manageSystems(world)
                     system.active = true
                 end
                 system.modified = true
+                system.world = world
                 index = #systems + 1
                 systemIndices[system] = index
                 systems[index] = system
