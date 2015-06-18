@@ -215,6 +215,19 @@ describe('tiny-ecs:', function()
             assert.equals(1, world:getSystemIndex(oneTimeSystem))
         end)
 
+        it("Sorts Entities in Sorting Systems", function()
+            local sortsys = tiny.system({}, {"sorted"})
+            sortsys.filter = tiny.requireAll("vel")
+            function sortsys:compare(e1, e2)
+                return e1.vel.x < e2.vel.x
+            end
+            world:add(sortsys)
+            world:update(0)
+            assert.equals(sortsys.entities[1], entity2)
+            assert.equals(sortsys.entities[2], entity3)
+            assert.equals(sortsys.entities[3], entity1)
+        end)
+        
     end)
 
 end)

@@ -50,8 +50,8 @@ local tiny_remove
 -- value indicating if the Entity should be processed by the System.
 --
 -- Filters must be added to Systems by setting the `filter` field of the System.
--- Filter's returned by `tiny.requireAll` and `tiny.requireAny` are immutable
--- and can be used by multiple Systems.
+-- Filter's returned by tiny-ecs's Filter functions are immutable and can be
+-- used by multiple Systems.
 --
 --    local f1 = tiny.requireAll("position", "velocity", "size")
 --    local f2 = tiny.requireAny("position", "velocity", "size")
@@ -254,7 +254,7 @@ end
 -- Sorts Systems by a function system.sort(entity1, entity2) on modify.
 local function sortedSystemOnModify(system, dt)
     local entities = system.entities
-    local entityIndices = system.entityIndices
+    local indices = system.indices
     local sortDelegate = system.sortDelegate
     if not sortDelegate then
         local compare = system.compare
@@ -266,7 +266,7 @@ local function sortedSystemOnModify(system, dt)
     tsort(entities, sortDelegate)
     for i = 1, #entities do
         local entity = entities[i]
-        entityIndices[entity] = i
+        indices[entity] = i
     end
 end
 
@@ -627,15 +627,16 @@ function tiny_manageEntities(world)
 end
 
 --- Updates the World by dt (delta time). Takes an optional parameter, `filter`,
--- which is a Filter that selects Systems from the World. Only selected Systems
--- are updated. Put this function in your main loop.
+-- which is a Filter that selects Systems from the World, and updates only those
+-- Systems. If `filter` is not supplied, all Systems are updated. Put this
+-- function in your main loop.
 function tiny.update(world, dt, filter)
 
     tiny_manageSystems(world)
     tiny_manageEntities(world)
 
     local systems = world.systems
-    local system, update, onModify, entities
+    local system, update, onModify
 
     --  Iterate through Systems IN ORDER
     for i = 1, #systems do
