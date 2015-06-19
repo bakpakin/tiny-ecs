@@ -286,11 +286,11 @@ end
 -- Systems process each entity individual, and are usually what is needed.
 -- Processing Systems have three extra callbacks besides those inheritted from
 -- vanilla Systems.
---     * `function system:preProcess(entities, dt)` - Called before iterating
--- over each Entity.
---     * `function system:process(entities, dt)` - Called for each Entity in
--- the System.
---     * `function system:postProcess(entity, dt)` - Called after iteration.
+--
+--     function system:preProcess(entities, dt) -- Called before iteration.
+--     function system:process(entities, dt) -- Process each entity.
+--     function system:postProcess(entity, dt) -- Called after iteration.
+--
 -- Processing Systems have their own `update` method, so don't implement a
 -- a custom `update` callback for Processing Systems.
 -- @see system
