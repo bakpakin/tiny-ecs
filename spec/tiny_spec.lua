@@ -91,7 +91,7 @@ describe('tiny-ecs:', function()
 
         local world, entity1, entity2, entity3
 
-        local moveSystem = tiny.system({}, {"process"})
+        local moveSystem = tiny.processingSystem()
         moveSystem.filter = tiny.requireAll("xform", "vel")
         function moveSystem:process(e, dt)
             local xform = e.xform
@@ -216,7 +216,7 @@ describe('tiny-ecs:', function()
         end)
 
         it("Sorts Entities in Sorting Systems", function()
-            local sortsys = tiny.system({}, {"sorted"})
+            local sortsys = tiny.sortedProcessingSystem()
             sortsys.filter = tiny.requireAll("vel")
             function sortsys:compare(e1, e2)
                 return e1.vel.x < e2.vel.x
@@ -227,7 +227,7 @@ describe('tiny-ecs:', function()
             assert.equals(sortsys.entities[2], entity3)
             assert.equals(sortsys.entities[3], entity1)
         end)
-        
+
     end)
 
 end)
