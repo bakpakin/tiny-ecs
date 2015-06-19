@@ -85,16 +85,20 @@
 <h2><a href="#System_functions">System functions </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#tiny.system">tiny.system (table, attributes)</a></td>
-	<td class="summary">Creates a new System or System class.</td>
+	<td class="name" nowrap><a href="#tiny.system">tiny.system (table)</a></td>
+	<td class="summary">Creates a new System or System class from the supplied table.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.processingSystem">tiny.processingSystem (table)</a></td>
 	<td class="summary">Creates a new Processing System or Processing System class.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#tiny.getSystemEntityCount">tiny.getSystemEntityCount (system)</a></td>
-	<td class="summary">Get number of Entities in the System.</td>
+	<td class="name" nowrap><a href="#tiny.sortedSystem">tiny.sortedSystem (table)</a></td>
+	<td class="summary">Creates a new Sorted System or Sorted System class.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#tiny.sortedProcessingSystem">tiny.sortedProcessingSystem (table)</a></td>
+	<td class="summary">Creates a new Sorted Processing System or Sorted Processing System class.</td>
 	</tr>
 </table>
 <h2><a href="#World_functions">World functions </a></h2>
@@ -171,8 +175,8 @@
  value indicating if the Entity should be processed by the System.</p>
 
 <p> Filters must be added to Systems by setting the <code>filter</code> field of the System.
- Filter's returned by <a href="index.html#tiny.requireAll">tiny.requireAll</a> and <a href="index.html#tiny.requireAny">tiny.requireAny</a> are immutable
- and can be used by multiple Systems.</p>
+ Filter's returned by tiny-ecs's Filter functions are immutable and can be
+ used by multiple Systems.</p>
 
 <pre><code>local f1 = tiny.requireAll("position", "velocity", "size")
 local f2 = tiny.requireAny("position", "velocity", "size")
@@ -313,11 +317,17 @@ end
  commonly used.</p>
 
 <ul>
+    <li>The <a href="index.html#tiny.world">world</a> field points to the World that the System belongs to. Useful
+    for adding and removing Entities from the world dynamically via the System.</li>
     <li>The <code>active</code> flag is whether or not the System is updated automatically.
     Inactive Systems should be updated manually or not at all via
     <code>system:update(dt)</code>. Defaults to true.</li>
     <li>The 'entities' field is an ordered list of Entities in the System. This
     list can be used to quickly iterate through all Entities in a System.</li>
+    <li>The <code>interval</code> field is an optional field that makes Systems update at
+    certain intervals using buffered time, regardless of World update frequency.
+    For example, to make a System update once a second, set the System's interval
+    to 1.</li>
     <li>The <code>indices</code> field is a table of Entity keys to their indices in the
     <code>entities</code> list. Most Systems can ignore this.</li>
     <li>The <code>modified</code> flag is an indicator if the System has been modified in
@@ -331,38 +341,11 @@ end
     <dl class="function">
     <dt>
     <a name = "tiny.system"></a>
-    <strong>tiny.system (table, attributes)</strong>
+    <strong>tiny.system (table)</strong>
     </dt>
     <dd>
-    Creates a new System or System class.  An optinal list of attributes may be
- passed to specify the behavior of the System. Currently, the three supported
- attributes are <code>&quot;process&quot;</code>, <code>&quot;sorted&quot;</code>, and <code>&quot;interval&quot;</code>.</p>
-
-<ul>
-    <li><code>&quot;process&quot;</code> marks the new System as a Processing System. Processing
-    Systems process each entity individual, and are usually what is needed.
-    Processing Systems have three extra callbacks compared to a vanilla System.
-    <ul>
-        <li><code>function system:preProcess(entities, dt)</code> - Called before iterating
-        over each Entity.</li>
-        <li><code>function system:postProcess(entities, dt)</code> - Called for each Entity in
-        the System.</li>
-        <li><code>function system:process(entity, dt)</code> - Called after iteration.
-        Processing Systems have their own <a href="index.html#tiny.update">update</a> method, so don't implement a
-        a custom <a href="index.html#tiny.update">update</a> callback for Processing Systems.</li>
-    </ul></li>
-    <li><code>&quot;sorted&quot;</code> marks the new System as a Sorted System. Sorted Systems sort
-    their Entities according to a user-defined method, <code>system:compare(e1, e2)</code>,
-    which should return true if <code>e1</code> should come before <code>e2</code> and false otherwise.</li>
-    <li><code>&quot;interval&quot;</code> marks the new System as an Interval System. Interval
-    Systems are updated regulary according to an interval rather than every time
-    the world is update. This is useful for Systems that don't need to be updated
-    often or need be deterministic. Interval Systems have a user-defined field
-    <code>interval</code> that is the time interval between updates. If no interval is
-    specified, a default of 1 is used.</li>
-</ul>
-
-<p> If <a href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a> is <code>nil</code>, this function uses an empty table.
+    Creates a new System or System class from the supplied table.  If <a href="http://www.lua.org/manual/5.2/manual.html#6.5">table</a> is
+ nil, creates a new table.
 
 
 
@@ -376,8 +359,20 @@ end
     <strong>tiny.processingSystem (table)</strong>
     </dt>
     <dd>
-    Creates a new Processing System or Processing System class.  Shortcut for
- <code>tiny.system(table, { &quot;process&quot; })</code>.
+    Creates a new Processing System or Processing System class.  Processing
+ Systems process each entity individual, and are usually what is needed.
+ Processing Systems have three extra callbacks besides those inheritted from
+ vanilla Systems.</p>
+<pre><code> * &lt;code&gt;function system:preProcess(entities, dt)&lt;/code&gt; - Called before iterating
+</code></pre>
+<p> over each Entity.</p>
+<pre><code> * &lt;code&gt;function system:process(entities, dt)&lt;/code&gt; - Called for each Entity in
+</code></pre>
+<p> the System.</p>
+<pre><code> * &lt;code&gt;function system:postProcess(entity, dt)&lt;/code&gt; - Called after iteration.
+</code></pre>
+<p> Processing Systems have their own <a href="index.html#tiny.update">update</a> method, so don't implement a
+ a custom <a href="index.html#tiny.update">update</a> callback for Processing Systems.
 
 
 
@@ -391,16 +386,47 @@ end
 
 </dd>
     <dt>
-    <a name = "tiny.getSystemEntityCount"></a>
-    <strong>tiny.getSystemEntityCount (system)</strong>
+    <a name = "tiny.sortedSystem"></a>
+    <strong>tiny.sortedSystem (table)</strong>
     </dt>
     <dd>
-    Get number of Entities in the System.
+    Creates a new Sorted System or Sorted System class.  Sorted Systems sort
+ their Entities according to a user-defined method, <code>system:compare(e1, e2)</code>,
+ which should return true if <code>e1</code> should come before <code>e2</code> and false otherwise.
+ Sorted Systems also override the default System's <code>onModify</code> callback, so be
+ careful if defining a custom callback. However, for processing the sorted
+ entities, consider <code>tiny.sortedProcessingSystem(table)</code>.
 
 
 
 
 
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#tiny.system">system</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "tiny.sortedProcessingSystem"></a>
+    <strong>tiny.sortedProcessingSystem (table)</strong>
+    </dt>
+    <dd>
+    Creates a new Sorted Processing System or Sorted Processing System class.
+ Sorted Processing Systems have both the aspects of Processing Systems and
+ Sorted Systems.
+
+
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="index.html#tiny.system">system</a></li>
+         <li><a href="index.html#tiny.processingSystem">processingSystem</a></li>
+         <li><a href="index.html#tiny.sortedSystem">sortedSystem</a></li>
+    </ul>
 
 
 </dd>
@@ -523,8 +549,9 @@ end
     </dt>
     <dd>
     Updates the World by dt (delta time).  Takes an optional parameter, <code>filter</code>,
- which is a Filter that selects Systems from the World. Only selected Systems
- are updated. Put this function in your main loop.
+ which is a Filter that selects Systems from the World, and updates only those
+ Systems. If <code>filter</code> is not supplied, all Systems are updated. Put this
+ function in your main loop.
 
 
 
@@ -627,7 +654,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-06-16 23:50:18 </i>
+<i style="float:right;">Last updated 2015-06-19 19:27:22 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
