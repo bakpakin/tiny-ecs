@@ -345,7 +345,8 @@ end
 local worldMetaTable
 
 --- Creates a new World.
--- Can optionally add default Systems and Entities.
+-- Can optionally add default Systems and Entities. Returns the new World along
+-- with default Entities and Systems.
 function tiny.world(...)
     local ret = {
 
@@ -375,12 +376,12 @@ function tiny.world(...)
     tiny_manageSystems(ret)
     tiny_manageEntities(ret)
 
-    return setmetatable(ret, worldMetaTable)
+    return setmetatable(ret, worldMetaTable), ...
 end
 
 --- Adds an Entity to the world.
 -- Also call this on Entities that have changed Components such that they
--- match different Filters.
+-- match different Filters. Returns the Entity.
 function tiny.addEntity(world, entity)
     local e2a = world.entitiesToAdd
     e2a[#e2a + 1] = entity
@@ -391,7 +392,7 @@ function tiny.addEntity(world, entity)
 end
 tiny_addEntity = tiny.addEntity
 
---- Adds a System to the world.
+--- Adds a System to the world. Returns the System.
 function tiny.addSystem(world, system)
     local s2a = world.systemsToAdd
     s2a[#s2a + 1] = system
@@ -399,7 +400,8 @@ function tiny.addSystem(world, system)
 end
 tiny_addSystem = tiny.addSystem
 
---- Shortcut for adding multiple Entities and Systems to the World.
+--- Shortcut for adding multiple Entities and Systems to the World. Returns all
+-- added Entities and Systems.
 function tiny.add(world, ...)
     local obj
     for i = 1, select("#", ...) do
@@ -416,7 +418,7 @@ function tiny.add(world, ...)
 end
 tiny_add = tiny.add
 
---- Removes an Entity to the World.
+--- Removes an Entity to the World. Returns the Entity.
 function tiny.removeEntity(world, entity)
     local e2r = world.entitiesToRemove
     e2r[#e2r + 1] = entity
@@ -424,7 +426,7 @@ function tiny.removeEntity(world, entity)
 end
 tiny_removeEntity = tiny.removeEntity
 
---- Removes a System from the world.
+--- Removes a System from the world. Returns the System.
 function tiny.removeSystem(world, system)
     local s2r = world.systemsToRemove
     s2r[#s2r + 1] = system
@@ -432,7 +434,8 @@ function tiny.removeSystem(world, system)
 end
 tiny_removeSystem = tiny.removeSystem
 
---- Shortcut for removing multiple Entities and Systems from the World.
+--- Shortcut for removing multiple Entities and Systems from the World. Returns
+-- all rmeove Systems and Entities
 function tiny.remove(world, ...)
     local obj
     for i = 1, select("#", ...) do
@@ -708,7 +711,6 @@ worldMetaTable = {
         clearSystems = tiny.clearSystems,
         getEntityCount = tiny.getEntityCount,
         getSystemCount = tiny.getSystemCount,
-        getSystemIndex = tiny.getSystemIndex,
         setSystemIndex = tiny.setSystemIndex
     }
 }
