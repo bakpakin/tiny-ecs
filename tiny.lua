@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "1.1-5" }
+local tiny = { _VERSION = "scm" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -388,6 +388,7 @@ function tiny.addEntity(world, entity)
     if world.entities[entity] then
         tiny_removeEntity(world, entity)
     end
+    return entity
 end
 tiny_addEntity = tiny.addEntity
 
@@ -395,6 +396,7 @@ tiny_addEntity = tiny.addEntity
 function tiny.addSystem(world, system)
     local s2a = world.systemsToAdd
     s2a[#s2a + 1] = system
+    return system
 end
 tiny_addSystem = tiny.addSystem
 
@@ -411,6 +413,7 @@ function tiny.add(world, ...)
             end
         end
     end
+    return ...
 end
 tiny_add = tiny.add
 
@@ -418,6 +421,7 @@ tiny_add = tiny.add
 function tiny.removeEntity(world, entity)
     local e2r = world.entitiesToRemove
     e2r[#e2r + 1] = entity
+    return entity
 end
 tiny_removeEntity = tiny.removeEntity
 
@@ -425,6 +429,7 @@ tiny_removeEntity = tiny.removeEntity
 function tiny.removeSystem(world, system)
     local s2r = world.systemsToRemove
     s2r[#s2r + 1] = system
+    return system
 end
 tiny_removeSystem = tiny.removeSystem
 
@@ -441,6 +446,7 @@ function tiny.remove(world, ...)
             end
         end
     end
+    return ...
 end
 tiny_remove = tiny.remove
 
