@@ -680,9 +680,15 @@ function tiny.getSystemCount(world)
     return #(world.systems)
 end
 
+--- Gets the index of the System in the World.
+-- A simpler alternative is `system.index`.
+function tiny.getSystemIndex(world, system)
+    return system.index
+end
+
 --- Sets the index of a System in the World, and returns the old index. Changes
 -- the order in which they Systems processed, because lower indexed Systems are
--- processed first.
+-- processed first. Returns the old system.index.
 function tiny.setSystemIndex(world, system, index)
     local oldIndex = system.index
     local systems = world.systems
@@ -711,6 +717,7 @@ worldMetaTable = {
         clearSystems = tiny.clearSystems,
         getEntityCount = tiny.getEntityCount,
         getSystemCount = tiny.getSystemCount,
+        getSystemIndex = tiny.getSystemIndex,
         setSystemIndex = tiny.setSystemIndex
     }
 }
