@@ -206,12 +206,15 @@ end
 --   * The `active` flag is whether or not the System is updated automatically.
 -- Inactive Systems should be updated manually or not at all via
 -- `system:update(dt)`. Defaults to true.
---   * The 'entities' field is an ordered list of Entities in the System. This
+--   * The `entities` field is an ordered list of Entities in the System. This
 -- list can be used to quickly iterate through all Entities in a System.
 --   * The `interval` field is an optional field that makes Systems update at
 -- certain intervals using buffered time, regardless of World update frequency.
 -- For example, to make a System update once a second, set the System's interval
 -- to 1.
+--   * The `index` field is the System's index in the World. Lower indexed
+-- Systems are processed before higher indices. The `index` is a read only
+-- field; to set the `index`, use `tiny.setSystemIndex(world, system)`.
 --   * The `indices` field is a table of Entity keys to their indices in the
 -- `entities` list. Most Systems can ignore this.
 --   * The `modified` flag is an indicator if the System has been modified in
@@ -361,15 +364,11 @@ function tiny.world(...)
         -- Set of Entities
         entities = {},
 
-        -- Number of Entities in World.
+        -- Number of Entities in World
         entityCount = 0,
 
-        -- List of System Data. A data element is a table with 4
-        -- keys: system, indices, entities, and active.
-        systems = {},
-
-        -- Table of Systems to System Indices
-        systemIndices = {}
+        -- List of Systems
+        systems = {}
     }
 
     tiny_add(ret, ...)
@@ -459,7 +458,6 @@ function tiny_manageSystems(world)
             return
         end
 
-        local systemIndices = world.systemIndices
         local entities = world.entities
         local systems = world.systems
         local system, index, filter
@@ -468,8 +466,8 @@ function tiny_manageSystems(world)
         -- Remove Systems
         for i = 1, #s2r do
             system = s2r[i]
-            index = systemIndices[system]
-            if index then
+            index = system.index
+            if system.world == world then
                 onRemove = system.onRemove
                 if onRemove then
                     entityList = system.entities
@@ -477,10 +475,9 @@ function tiny_manageSystems(world)
                         onRemove(system, entityList[j])
                     end
                 end
-                systemIndices[system] = nil
                 tremove(systems, index)
                 for j = index, #systems do
-                    systemIndices[systems[j]] = j
+                    systems[j].index = j
                 end
             end
             s2r[i] = nil
@@ -489,12 +486,13 @@ function tiny_manageSystems(world)
             system.world = nil
             system.entities = nil
             system.indices = nil
+            system.index = nil
         end
 
         -- Add Systems
         for i = 1, #s2a do
             system = s2a[i]
-            if not systemIndices[system] then
+            if systems[system.index] ~= system then
                 entityList = {}
                 entityIndices = {}
                 system.entities = entityList
@@ -505,7 +503,7 @@ function tiny_manageSystems(world)
                 system.modified = true
                 system.world = world
                 index = #systems + 1
-                systemIndices[system] = index
+                system.index = index
                 systems[index] = system
 
                 -- Try to add Entities
@@ -631,7 +629,7 @@ function tiny.update(world, dt, filter)
                 onModify(system, dt)
             end
 
-            --Update Systems that have an update method (most Systems)
+            -- Update Systems that have an update method (most Systems)
             update = system.update
             if update then
                 interval = system.interval
@@ -679,26 +677,18 @@ function tiny.getSystemCount(world)
     return #(world.systems)
 end
 
---- Gets the index of a System in the World. Lower indexed Systems are processed
--- before higher indexed systems.
-function tiny.getSystemIndex(world, system)
-    return world.systemIndices[system]
-end
-
 --- Sets the index of a System in the World, and returns the old index. Changes
 -- the order in which they Systems processed, because lower indexed Systems are
 -- processed first.
 function tiny.setSystemIndex(world, system, index)
-    local systemIndices = world.systemIndices
-    local oldIndex = systemIndices[system]
+    local oldIndex = system.index
     local systems = world.systems
-    local system = systems[oldIndex]
 
     tremove(systems, oldIndex)
     tinsert(systems, index, system)
 
     for i = oldIndex, index, index >= oldIndex and 1 or -1 do
-        systemIndices[systems[i]] = i
+        systems[i].index = i
     end
 
     return oldIndex
