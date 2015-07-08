@@ -1,6 +1,6 @@
 class = require "lib.30log"
 tiny = require "lib.tiny"
-gamestate = require "lib.gamestate"
+gamestate = require "lib.gamestate" -- slightly modified to play nice;y with 30log
 local Intro = require "src.states.Intro"
 local Level = require "src.states.Level"
 

@@ -45,7 +45,8 @@ function GS.push(to, ...)
 	assert(to, "Missing argument: Gamestate to switch to")
 	assert(to ~= GS, "Can't call push with colon operator")
 	local pre = stack[#stack]
-	;(to.load or __NULL__)(to)
+	;(to.load or __NULL__)(to) -- modified to use load instead of init so as
+	-- to not interfere with 30log.
 	to.load = nil
 	stack[#stack+1] = to
 	return (to.enter or __NULL__)(to, pre, ...)
@@ -53,7 +54,7 @@ end
 
 function GS.pop(...)
 	assert(#stack > 1, "No more states to pop!")
-	local pre, to = stack[#stack], stack[#stack-1] 
+	local pre, to = stack[#stack], stack[#stack-1]
 	stack[#stack] = nil
 	;(pre.leave or __NULL__)(pre)
 	return (to.resume or __NULL__)(to, pre, ...)
