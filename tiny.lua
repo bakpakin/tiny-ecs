@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "1.1-6" }
+local tiny = { _VERSION = "scm" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -435,7 +435,7 @@ end
 tiny_removeSystem = tiny.removeSystem
 
 --- Shortcut for removing multiple Entities and Systems from the World. Returns
--- all rmeove Systems and Entities
+-- all removed Systems and Entities
 function tiny.remove(world, ...)
     local obj
     for i = 1, select("#", ...) do
@@ -609,6 +609,14 @@ function tiny_manageEntities(world)
     world.entityCount = entityCount
 end
 
+--- Manages Entities and Systems marked for deletion or addition. Call this
+-- before modifying Systems and Entities outside of a call to `tiny.update`.
+-- Do not call this within a call to `tiny.update`.
+function tiny.refresh(world)
+    tiny_manageSystems(world)
+    tiny_manageEntities(world)
+end
+
 --- Updates the World by dt (delta time). Takes an optional parameter, `filter`,
 -- which is a Filter that selects Systems from the World, and updates only those
 -- Systems. If `filter` is not supplied, all Systems are updated. Put this
@@ -712,6 +720,7 @@ worldMetaTable = {
         remove = tiny.remove,
         removeEntity = tiny.removeEntity,
         removeSystem = tiny.removeSystem,
+        refresh = tiny.refresh,
         update = tiny.update,
         clearEntities = tiny.clearEntities,
         clearSystems = tiny.clearSystems,
