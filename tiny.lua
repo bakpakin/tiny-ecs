@@ -696,10 +696,16 @@ end
 
 --- Sets the index of a System in the World, and returns the old index. Changes
 -- the order in which they Systems processed, because lower indexed Systems are
--- processed first. Returns the old system.index.
+-- processed first. If 'index' < 0, then sets 'index' relative to the last index
+-- in the World; -1 is the index of the last System, -2 is the second to last,
+-- and so on. Returns the old system.index.
 function tiny.setSystemIndex(world, system, index)
     local oldIndex = system.index
     local systems = world.systems
+
+    if index < 0 then
+        index = tiny.getSystemCount(world) + 1 + index
+    end
 
     tremove(systems, oldIndex)
     tinsert(systems, index, system)
