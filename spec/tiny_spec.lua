@@ -1,3 +1,8 @@
+local GLOBALS = {}
+for k, v in pairs(_G) do
+    GLOBALS[k] = v
+end
+
 local tiny = require "tiny"
 
 local function deep_copy(x)
@@ -228,6 +233,10 @@ describe('tiny-ecs:', function()
             assert.equals(sortsys.entities[3], entity1)
         end)
 
+    end)
+
+    it("Doesn't pollute the global namespace", function()
+        assert.are.same(_G, GLOBALS)
     end)
 
 end)
