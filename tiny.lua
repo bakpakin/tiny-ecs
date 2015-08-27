@@ -291,7 +291,7 @@ end
 -- vanilla Systems.
 --
 --     function system:preProcess(dt) -- Called before iteration.
---     function system:process(entities, dt) -- Process each entity.
+--     function system:process(entity, dt) -- Process each entity.
 --     function system:postProcess(dt) -- Called after iteration.
 --
 -- Processing Systems have their own `update` method, so don't implement a
