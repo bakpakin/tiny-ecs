@@ -1,5 +1,7 @@
 # tiny-ecs #
 
+[![Build Status](https://travis-ci.org/bakpakin/tiny-ecs.png?branch=master)](https://travis-ci.org/bakpakin/tiny-ecs)
+
 [![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
 
 Tiny-ecs is an Entity Component System for lua that's simple, flexible, and useful.
