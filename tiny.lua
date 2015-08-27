@@ -356,6 +356,9 @@ function tiny.world(...)
         -- List of Entities to remove
         entitiesToRemove = {},
 
+        -- List of Entities to change
+        entitiesToChange = {},
+
         -- List of Entities to add
         systemsToAdd = {},
 
@@ -383,10 +386,12 @@ end
 -- Also call this on Entities that have changed Components such that they
 -- match different Filters. Returns the Entity.
 function tiny.addEntity(world, entity)
-    local e2a = world.entitiesToAdd
-    e2a[#e2a + 1] = entity
     if world.entities[entity] then
-        tiny_removeEntity(world, entity)
+        local e2c = world.entitiesToChange
+        e2c[#e2c + 1] = entity
+    else
+        local e2a = world.entitiesToAdd
+        e2a[#e2a + 1] = entity
     end
     return entity
 end
@@ -532,16 +537,19 @@ function tiny_manageSystems(world)
     end
 end
 
--- Adds and removes Entities that have been marked.
+-- Adds, removes, and changes Entities that have been marked.
 function tiny_manageEntities(world)
 
-    local e2a, e2r = world.entitiesToAdd, world.entitiesToRemove
+    local e2a = world.entitiesToAdd
+    local e2r = world.entitiesToRemove
+    local e2c = world.entitiesToChange
 
     -- Early exit
-    if #e2a == 0 and #e2r == 0 then
+    if #e2a == 0 and #e2r == 0 and #e2c == 0 then
         return
     end
 
+    world.entitiesToChange = {}
     world.entitiesToAdd = {}
     world.entitiesToRemove = {}
 
@@ -550,6 +558,44 @@ function tiny_manageEntities(world)
     local entityCount = world.entityCount
     local entity, system, index
     local onRemove, onAdd, ses, seis, filter, tmpEntity
+
+    -- Change Entities
+    for i = 1, #e2c do
+        entity = e2c[i]
+        if entities[entity] then
+            for j = 1, #systems do
+                system = systems[j]
+                ses = system.entities
+                seis = system.indices
+                index = seis[entity]
+                filter = system.filter
+                if filter and filter(system, entity) then
+                    if not index then
+                        system.modified = true
+                        index = #ses + 1
+                        ses[index] = entity
+                        seis[entity] = index
+                        onAdd = system.onAdd
+                        if onAdd then
+                            onAdd(system, entity)
+                        end
+                    end
+                elseif index then
+                    system.modified = true
+                    tmpEntity = ses[#ses]
+                    ses[index] = tmpEntity
+                    seis[tmpEntity] = index
+                    seis[entity] = nil
+                    ses[#ses] = nil
+                    onRemove = system.onRemove
+                    if onRemove then
+                        onRemove(system, entity)
+                    end
+                end
+            end
+        end
+        e2c[i] = nil
+    end
 
     -- Remove Entities
     for i = 1, #e2r do
