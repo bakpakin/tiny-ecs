@@ -290,9 +290,9 @@ end
 -- Processing Systems have three extra callbacks besides those inheritted from
 -- vanilla Systems.
 --
---     function system:preProcess(entities, dt) -- Called before iteration.
+--     function system:preProcess(dt) -- Called before iteration.
 --     function system:process(entities, dt) -- Process each entity.
---     function system:postProcess(entity, dt) -- Called after iteration.
+--     function system:postProcess(dt) -- Called after iteration.
 --
 -- Processing Systems have their own `update` method, so don't implement a
 -- a custom `update` callback for Processing Systems.
