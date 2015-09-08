@@ -398,8 +398,10 @@ tiny_addEntity = tiny.addEntity
 
 --- Adds a System to the world. Returns the System.
 function tiny.addSystem(world, system)
+    assert(system.world == nil, "System already belongs to a World.")
     local s2a = world.systemsToAdd
     s2a[#s2a + 1] = system
+    system.world = world
     return system
 end
 tiny_addSystem = tiny.addSystem
@@ -431,6 +433,7 @@ tiny_removeEntity = tiny.removeEntity
 
 --- Removes a System from the world. Returns the System.
 function tiny.removeSystem(world, system)
+    assert(system.world == world, "System does not belong to this World.")
     local s2r = world.systemsToRemove
     s2r[#s2r + 1] = system
     return system
