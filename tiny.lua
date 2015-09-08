@@ -449,7 +449,7 @@ function tiny.remove(world, ...)
             if isSystem(obj) then
                 tiny_removeSystem(world, obj)
             else -- Assume obj is an Entity
-               tiny_removeEntity(world, obj)
+                tiny_removeEntity(world, obj)
             end
         end
     end
@@ -476,18 +476,20 @@ function tiny_manageSystems(world)
     for i = 1, #s2r do
         local system = s2r[i]
         local index = system.index
-        if system.world == world then
-            local onRemove = system.onRemove
-            if onRemove then
-                local entityList = system.entities
-                for j = 1, #entityList do
-                    onRemove(system, entityList[j])
-                end
+        local onRemove = system.onRemove
+        if onRemove then
+            local entityList = system.entities
+            for j = 1, #entityList do
+                onRemove(system, entityList[j])
             end
-            tremove(systems, index)
-            for j = index, #systems do
-                systems[j].index = j
-            end
+        end
+        tremove(systems, index)
+        for j = index, #systems do
+            systems[j].index = j
+        end
+        local onRemoveFromWorld = system.onRemoveFromWorld
+        if onRemoveFromWorld then
+            onRemoveFromWorld(system, world)
         end
         s2r[i] = nil
 
@@ -514,6 +516,10 @@ function tiny_manageSystems(world)
             local index = #systems + 1
             system.index = index
             systems[index] = system
+            local onAddToWorld = system.onAddToWorld
+            if onAddToWorld then
+                onAddToWorld(system, world)
+            end
 
             -- Try to add Entities
             local onAdd = system.onAdd
