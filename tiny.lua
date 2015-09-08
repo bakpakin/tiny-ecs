@@ -187,6 +187,10 @@ end
 -- from the System.
 --   * `function system:onModify(dt)` - Called when the System is modified by
 -- adding or removing Entities from the System.
+--   * `function system:onAddToWorld(world)` - Called when the System is added
+-- to the World, before any entities are added to the system.
+--   * `function system:onRemoveFromWorld(world)` - Called when the System is
+-- removed from the world, after all Entities are removed from the System.
 --
 -- For Filters, it is convenient to use `tiny.requireAll` or `tiny.requireAny`,
 -- but one can write their own filters as well. Set the Filter of a System like
