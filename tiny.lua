@@ -85,9 +85,12 @@ local tiny_remove
 --
 -- @section Filter
 
-
 -- A helper function to compile filters.
 local filterJoin
+
+-- A helper function to filters from string
+local filterBuildString
+
 do
     local loadstring = loadstring or load
     local function getchr(c)
@@ -96,6 +99,7 @@ do
     local function make_safe(text)
         return ("%q"):format(text):gsub('\n', 'n'):gsub("[\128-\255]", getchr)
     end
+
     function filterJoin(prefix, seperator, ...)
         local accum = {}
         local build = {}
@@ -119,6 +123,37 @@ do
         if err then error(err) end
         return loader(...)
     end
+
+    local function buildPart(str)
+        local accum = {}
+        local subParts = {}
+        str = str:gsub('%b()', function(p)
+            subParts[#subParts + 1] = buildPart(p:sub(2, -2))
+            return ('\255%d'):format(#subParts)
+        end)
+        for invert, part, sep in str:gmatch('(%!?)([^%|%&%!]+)([%|%&%!]?)') do
+            if part:match('^\255%d+$') then
+                local partIndex = tonumber(part:match(part:sub(2)))
+                accum[#accum + 1] = ('%s(%s)'):format(invert == '' and '' or 'not', subParts[partIndex])
+            else
+                accum[#accum + 1] = ("(e[%s] %s nil)"):format(make_safe(part), invert == '' and '~=' or '==')
+            end
+            if sep ~= '' then
+                accum[#accum + 1] = (sep == '|' and ' or ' or ' and ')
+            end
+        end
+        return table.concat(accum)
+    end
+
+    print(buildPart'a|b|(c&d)')
+
+    function filterBuildString(str)
+        local source = ('return function(_, e) return %s end end'):format(buildPart(str))
+        local loader, err = loadstring(source)
+        if err then error(err) end
+        return loader()
+    end
+
 end
 
 --- Makes a Filter that selects Entities with all specified Components and
@@ -144,6 +179,18 @@ end
 function tiny.rejectAny(...)
     return filterJoin('not', ' or ', ...)
 end
+
+--- Makes a Filter from a string. Syntax is as follows.
+--
+--   * Tokens are alphanumeric strings including underscores.
+--   * Tokens can be separated by |, &, or surrounded by parentheses.
+--   * Tokens can be prefixed with ! are operated on with a boolean not.
+--
+-- Examples are best:
+--    'a|b|c' - Matches entities with an 'a' component OR a 'b' component or a 'c' component.
+--    'a&!b&c' - Matches entities with an 'a' component AND NOT a 'b' component AND a 'c' component.
+--    'a|(b&c&d)|e - Matches 'a' OR ('b' AND 'c' AND 'd') OR 'e'
+tiny.filter = filterBuildString
 
 --- System functions.
 -- A System is a wrapper around function callbacks for manipulating Entities.
