@@ -90,6 +90,27 @@ describe('tiny-ecs:', function()
 
         end)
 
+        it("Can use functions as subfilters", function()
+
+            local f1 = tiny.requireAny('a', 'b', 'c')
+            local f2 = tiny.requireAll('x', 'y', 'z')
+            local f = tiny.requireAll(f1, f2)
+
+            assert.truthy(f(nil, {
+                x = true, y = true, z = true, a = true, b = true, c = true
+            }))
+            assert.truthy(f(nil, {
+                x = true, y = true, z = true, a = true
+            }))
+            assert.falsy(f(nil, {
+                x = true, y = true, a = true
+            }))
+            assert.falsy(f(nil, {
+                x = true, y = true, z = true
+            }))
+
+        end)
+
     end)
 
     describe('World:', function()

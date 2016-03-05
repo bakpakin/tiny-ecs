@@ -23,7 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- @author Calvin Rose
 -- @license MIT
 -- @copyright 2015
-local tiny = { _VERSION = "1.2-1" }
+local tiny = { _VERSION = "scm" }
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
@@ -85,88 +85,64 @@ local tiny_remove
 --
 -- @section Filter
 
+
+-- A helper function to compile filters.
+local filterJoin
+do
+    local loadstring = loadstring or load
+    local function getchr(c)
+        return "\\" .. c:byte()
+    end
+    local function make_safe(text)
+        return ("%q"):format(text):gsub('\n', 'n'):gsub("[\128-\255]", getchr)
+    end
+    function filterJoin(prefix, seperator, ...)
+        local accum = {}
+        local build = {}
+        for i = 1, select('#', ...) do
+            local item = select(i, ...)
+            if type(item) == 'string' then
+                accum[#accum + 1] = ("(e[%s] ~= nil)"):format(make_safe(item))
+            elseif type(item) == 'function' then
+                build[#build + 1] = ('local subfilter_%d_ = select(%d, ...)'):format(i, i)
+                accum[#accum + 1] = ('(subfilter_%d_(system, e))'):format(i)
+            else
+                error 'Filter token must be a string or a filter function.'
+            end
+        end
+        local source = ('do %s\n return function(system, e) return %s(%s) end end'):format(
+            table.concat(build, '\n'),
+            prefix,
+            table.concat(accum, seperator)
+        )
+        local loader, err = loadstring(source)
+        if err then error(err) end
+        return loader(...)
+    end
+end
+
 --- Makes a Filter that selects Entities with all specified Components and
 -- Filters.
 function tiny.requireAll(...)
-    local components = {...}
-    local len = #components
-    return function(system, e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if type(c) == 'function' then
-                if not c(system, e) then
-                    return false
-                end
-            elseif e[c] == nil then
-                return false
-            end
-        end
-        return true
-    end
+    return filterJoin('', ' and ', ...)
 end
 
 --- Makes a Filter that selects Entities with at least one of the specified
 -- Components and Filters.
 function tiny.requireAny(...)
-    local components = {...}
-    local len = #components
-    return function(system, e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if type(c) == 'function' then
-                if c(system, e) then
-                    return true
-                end
-            elseif e[c] ~= nil then
-                return true
-            end
-        end
-        return false
-    end
+    return filterJoin('', ' or ', ...)
 end
 
 --- Makes a Filter that rejects Entities with all specified Components and
 -- Filters, and selects all other Entities.
 function tiny.rejectAll(...)
-    local components = {...}
-    local len = #components
-    return function(system, e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if type(c) == 'function' then
-                if not c(system, e) then
-                    return true
-                end
-            elseif e[c] == nil then
-                return true
-            end
-        end
-        return false
-    end
+    return filterJoin('not', ' and ', ...)
 end
 
 --- Makes a Filter that rejects Entities with at least one of the specified
 -- Components and Filters, and selects all other Entities.
 function tiny.rejectAny(...)
-    local components = {...}
-    local len = #components
-    return function(system, e)
-        local c
-        for i = 1, len do
-            c = components[i]
-            if type(c) == 'function' then
-                if c(system, e) then
-                    return false
-                end
-            elseif e[c] ~= nil then
-                return false
-            end
-        end
-        return true
-    end
+    return filterJoin('not', ' or ', ...)
 end
 
 --- System functions.
