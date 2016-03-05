@@ -111,6 +111,28 @@ describe('tiny-ecs:', function()
 
         end)
 
+        it("Can use string filters", function()
+
+            local f = tiny.filter('a|b|c')
+
+            assert.truthy(f(nil, {
+                a = true, b = true, c = true
+            }))
+            assert.truthy(f(nil, {
+                a = true
+            }))
+            assert.truthy(f(nil, {
+                b = true
+            }))
+            assert.truthy(f(nil, {
+                c = true
+            }))
+            assert.falsy(f(nil, {
+                x = true, y = true, z = true
+            }))
+
+        end)
+
     end)
 
     describe('World:', function()

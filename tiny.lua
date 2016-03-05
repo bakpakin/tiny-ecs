@@ -92,6 +92,7 @@ local filterJoin
 local filterBuildString
 
 do
+
     local loadstring = loadstring or load
     local function getchr(c)
         return "\\" .. c:byte()
@@ -145,12 +146,12 @@ do
         return table.concat(accum)
     end
 
-    print(buildPart'a|b|(c&d)')
-
     function filterBuildString(str)
-        local source = ('return function(_, e) return %s end end'):format(buildPart(str))
+        local source = ("return function(_, e) return %s end"):format(buildPart(str))
         local loader, err = loadstring(source)
-        if err then error(err) end
+        if err then
+            error(err)
+        end
         return loader()
     end
 
