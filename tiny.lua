@@ -101,7 +101,7 @@ do
         return ("%q"):format(text):gsub('\n', 'n'):gsub("[\128-\255]", getchr)
     end
 
-    function filterJoin(prefix, seperator, ...)
+    local function filterJoinRaw(prefix, seperator, ...)
         local accum = {}
         local build = {}
         for i = 1, select('#', ...) do
@@ -123,6 +123,11 @@ do
         local loader, err = loadstring(source)
         if err then error(err) end
         return loader(...)
+    end
+
+    function filterJoin(...)
+        local state, value = pcall(filterJoinRaw, ...)
+        if state then return value else return nil, value end
     end
 
     local function buildPart(str)
@@ -181,17 +186,21 @@ function tiny.rejectAny(...)
     return filterJoin('not', ' or ', ...)
 end
 
---- Makes a Filter from a string. Syntax is as follows.
+--- Makes a Filter from a string. Syntax of `pattern` is as follows.
 --
 --   * Tokens are alphanumeric strings including underscores.
 --   * Tokens can be separated by |, &, or surrounded by parentheses.
---   * Tokens can be prefixed with ! are operated on with a boolean not.
+--   * Tokens can be prefixed with !, and are then operated on with a boolean 'not'.
 --
 -- Examples are best:
 --    'a|b|c' - Matches entities with an 'a' component OR a 'b' component or a 'c' component.
 --    'a&!b&c' - Matches entities with an 'a' component AND NOT a 'b' component AND a 'c' component.
 --    'a|(b&c&d)|e - Matches 'a' OR ('b' AND 'c' AND 'd') OR 'e'
-tiny.filter = filterBuildString
+-- @param pattern
+function tiny.filter(pattern)
+    local state, value = pcall(filterBuildString, pattern)
+    if state then return value else return nil, value end
+end
 
 --- System functions.
 -- A System is a wrapper around function callbacks for manipulating Entities.
