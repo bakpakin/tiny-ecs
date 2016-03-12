@@ -1,6 +1,6 @@
 function love.conf(t)
     t.identity = nil
-    t.version = "0.9.2"
+    t.version = "0.10.1"
     t.console = false
     t.window.title = "Commando Kibbles"
     t.window.icon = nil
@@ -11,7 +11,6 @@ function love.conf(t)
     t.window.minwidth = 600
     t.window.minheight = 400
     t.window.fullscreen = false
-    t.window.fullscreentype = "normal"
     t.window.vsync = true
     t.window.fsaa = 0
     t.window.display = 1

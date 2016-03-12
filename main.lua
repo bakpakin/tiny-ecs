@@ -47,7 +47,7 @@ end
 
 function love.update(dt)
 	local s = gamestate.current()
-	if s and s.restartOnSpace and love.keyboard.isDown(" ") then
+	if s and s.restartOnSpace and love.keyboard.isDown("space") then
 		local TransitionScreen = require "src.entities.TransitionScreen"
 		world:add(TransitionScreen(true, Intro()))
 	end

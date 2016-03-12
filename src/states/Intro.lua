@@ -40,7 +40,7 @@ end
 
 function Intro:update(dt)
 	self.time = self.time + dt
-	if love.keyboard.isDown(" ") and self.time > 0.55 then
+	if love.keyboard.isDown("space") and self.time > 0.55 then
 		world:add(TransitionScreen(true, Level("assets/lvl1")))
 	end
 end
