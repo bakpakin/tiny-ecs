@@ -283,6 +283,27 @@ describe('tiny-ecs:', function()
             assert.equals(sortsys.entities[3], entity1)
         end)
 
+        it("Runs preWrap and postWrap for systems.", function()
+            local str = ""
+            local sys1 = tiny.system()
+            local sys2 = tiny.system()
+            function sys1:preWrap(dt)
+                str = str .. "<"
+            end
+            function sys2:preWrap(dt)
+                str = str .. "{"
+            end
+            function sys1:postWrap(dt)
+                str = str .. ">"
+            end
+            function sys2:postWrap(dt)
+                str = str .. "}"
+            end
+            world:add(sys1, sys2)
+            world:update(1)
+            assert.equals(str, "{<>}")
+        end)
+
     end)
 
     it("Doesn't pollute the global namespace", function()
