@@ -765,6 +765,15 @@ function tiny.update(world, dt, filter)
 
     local systems = world.systems
 
+    -- Iterate through Systems IN REVERSE ORDER
+    for i = #systems, 1, -1 do
+        local system = systems[i]
+        local preWrap = system.preWrap
+        if preWrap and system.active and ((not filter) or filter(world, system)) then
+            preWrap(system, dt)
+        end
+    end
+
     --  Iterate through Systems IN ORDER
     for i = 1, #systems do
         local system = systems[i]
@@ -797,6 +806,16 @@ function tiny.update(world, dt, filter)
             system.modified = false
         end
     end
+
+    -- Iterate through Systems IN ORDER AGAIN
+    for i = 1, #systems do
+        local system = systems[i]
+        local postWrap = system.postWrap
+        if postWrap and system.active and ((not filter) or filter(world, system)) then
+            postWrap(system, dt)
+        end
+    end
+
 end
 
 --- Removes all Entities from the World.
