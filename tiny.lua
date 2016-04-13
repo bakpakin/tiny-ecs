@@ -223,6 +223,19 @@ end
 -- to the World, before any entities are added to the system.
 --   * `function system:onRemoveFromWorld(world)` - Called when the System is
 -- removed from the world, after all Entities are removed from the System.
+--   * `function system:preWrap(dt)` - Called on each system before update is
+-- called on any system.
+--   * `function system:postWrap(dt) - Called on each system in reverse order
+-- after update is called on each system. The idea behind `preWrap` and
+-- `postWrap` is to allow for systems that modify the behavior of other systems.
+-- Say there is a DrawingSystem, which draws sprites to the screen, and a
+-- PostProcessingSystem, that adds some blur and bloom effects. In the preWrap
+-- method of the PostProcessingSystem, the System could set the drawing target
+-- for the DrawingSystem to a special buffer instead the screen. In the postWrap
+-- method, the PostProcessingSystem could then modify the buffer and render it
+-- to the screen. In this setup, the PostProcessingSystem would be added to the
+-- World after the drawingSystem (A similar but less flexible behavior could
+-- be accomplished with a single custom update function in the DrawingSystem).
 --
 -- For Filters, it is convenient to use `tiny.requireAll` or `tiny.requireAny`,
 -- but one can write their own filters as well. Set the Filter of a System like
