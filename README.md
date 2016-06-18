@@ -1,28 +1,26 @@
 # tiny-ecs #
 
-[![Build Status](https://travis-ci.org/bakpakin/tiny-ecs.png?branch=master)](https://travis-ci.org/bakpakin/tiny-ecs)
+[![Build Status](https://travis-ci.org/bakpakin/tiny-ecs.png?branch=master)](https://travis-ci.org/bakpakin/tiny-ecs)[![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
 
-[![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
-
-Tiny-ecs is an Entity Component System for lua that's simple, flexible, and useful.
-Because of lua's tabular nature, Entity Component Systems are a natural choice
+Tiny-ecs is an Entity Component System for Lua that's simple, flexible, and useful.
+Because of Lua's tabular nature, Entity Component Systems are a natural choice
 for simulating large and complex systems. For more explanation on Entity
 Component Systems, here is some
 [basic info](http://en.wikipedia.org/wiki/Entity_component_system "Wikipedia").
 
-Tiny-ecs also works well with objected oriented programming in lua because
+Tiny-ecs also works well with objected oriented programming in Lua because
 Systems and Entities do not use metatables. This means you can subclass your
-Systems and Entities, and use existing lua class frameworks with tiny-ecs, no problem.
-For an example on how to use tiny-ecs with object-oriented lua, take a look at the
+Systems and Entities, and use existing Lua class frameworks with tiny-ecs, no problem.
+For an example on how to use tiny-ecs with object-oriented Lua, take a look at the
 demo branch, specifically the systems and entities sub-directories.
 
 ## Overview ##
 Tiny-ecs has four important types: Worlds, Filters, Systems, and Entities.
-Entities, however, can be any lua table, and Filters are just functions that
+Entities, however, can be any Lua table, and Filters are just functions that
 take an Entity as a parameter.
 
 ### Entities ###
-Entities are simply lua tables of data that gets processed by Systems. Entities
+Entities are simply Lua tables of data that gets processed by Systems. Entities
 should contain primarily data rather than code, as it is the Systems's job to
 do logic on data. Henceforth, a key-value pair in an Entity will
 be referred to as a Component.
@@ -39,7 +37,7 @@ provides functions for creating Systems easily, as well as creating Systems that
 can be used in an object oriented fashion.
 
 ### Filters ###
-Filters are used to select Entities. Filters can be any lua function, but
+Filters are used to select Entities. Filters can be any Lua function, but
 tiny-ecs provides some functions for generating common ones, like selecting
 only Entities that have all required components.
 
@@ -51,7 +49,7 @@ local talkingSystem = tiny.processingSystem()
 talkingSystem.filter = tiny.requireAll("name", "mass", "phrase")
 function talkingSystem:process(e, dt)
     e.mass = e.mass + dt * 3
-    print(e.name .. ", who weighs " .. e.mass .. " pounds, says, \"" .. e.phrase .. "\"")
+    print(("%s who weighs %d pounds, says %q."):format(e.name, e.mass, e.phrase)
 end
 
 local joe = {
@@ -70,8 +68,7 @@ end
 
 ## Use It ##
 Copy paste tiny.lua into your source folder. For stability and consistent API,
-please use a tagged release or use luarocks. Tagged releases will have a version
-number in `tiny._VERSION`, while other commits will just have the string 'scm'.
+please use a tagged release or use luarocks.
 
 ## Luarocks ##
 Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
@@ -80,7 +77,7 @@ Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
 ## Demo ##
 Check out the [demo](https://github.com/bakpakin/tiny-ecs/tree/demo-commandokibbles), a game
 originally written for Ludum Dare 32 with the theme 'An Unconventional Weapon'. The demo uses
-[LÖVE](https://love2d.org/), an amazing game framework for lua.
+[LÖVE](https://love2d.org/), an amazing game framework for Lua.
 
 ## Testing ##
 Tiny-ecs uses [busted](http://olivinelabs.com/busted/) for testing. Install and run

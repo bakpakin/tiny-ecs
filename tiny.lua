@@ -22,8 +22,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --- @module tiny-ecs
 -- @author Calvin Rose
 -- @license MIT
--- @copyright 2015
-local tiny = { _VERSION = "scm" }
+-- @copyright 2016
+local tiny = {}
 
 -- Local versions of standard lua functions
 local tinsert = table.insert
