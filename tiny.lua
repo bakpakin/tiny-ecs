@@ -137,7 +137,7 @@ do
             subParts[#subParts + 1] = buildPart(p:sub(2, -2))
             return ('\255%d'):format(#subParts)
         end)
-        for invert, part, sep in str:gmatch('(%!?)([^%|%&%!]+)([%|%&%!]?)') do
+        for invert, part, sep in str:gmatch('(%!?)([^%|%&%!]+)([%|%&]?)') do
             if part:match('^\255%d+$') then
                 local partIndex = tonumber(part:match(part:sub(2)))
                 accum[#accum + 1] = ('%s(%s)')
