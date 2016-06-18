@@ -108,17 +108,18 @@ do
             if type(item) == 'string' then
                 accum[#accum + 1] = ("(e[%s] ~= nil)"):format(make_safe(item))
             elseif type(item) == 'function' then
-                build[#build + 1] = ('local subfilter_%d_ = select(%d, ...)'):format(i, i)
+                build[#build + 1] = ('local subfilter_%d_ = select(%d, ...)')
+                    :format(i, i)
                 accum[#accum + 1] = ('(subfilter_%d_(system, e))'):format(i)
             else
                 error 'Filter token must be a string or a filter function.'
             end
         end
-        local source = ('do %s\n return function(system, e) return %s(%s) end end'):format(
-            table.concat(build, '\n'),
-            prefix,
-            table.concat(accum, seperator)
-        )
+        local source = ('%s\nreturn function(system, e) return %s(%s) end')
+            :format(
+                table.concat(build, '\n'),
+                prefix,
+                table.concat(accum, seperator))
         local loader, err = loadstring(source)
         if err then error(err) end
         return loader(...)
@@ -139,9 +140,11 @@ do
         for invert, part, sep in str:gmatch('(%!?)([^%|%&%!]+)([%|%&%!]?)') do
             if part:match('^\255%d+$') then
                 local partIndex = tonumber(part:match(part:sub(2)))
-                accum[#accum + 1] = ('%s(%s)'):format(invert == '' and '' or 'not', subParts[partIndex])
+                accum[#accum + 1] = ('%s(%s)')
+                    :format(invert == '' and '' or 'not', subParts[partIndex])
             else
-                accum[#accum + 1] = ("(e[%s] %s nil)"):format(make_safe(part), invert == '' and '~=' or '==')
+                accum[#accum + 1] = ("(e[%s] %s nil)")
+                    :format(make_safe(part), invert == '' and '~=' or '==')
             end
             if sep ~= '' then
                 accum[#accum + 1] = (sep == '|' and ' or ' or ' and ')
@@ -151,7 +154,8 @@ do
     end
 
     function filterBuildString(str)
-        local source = ("return function(_, e) return %s end"):format(buildPart(str))
+        local source = ("return function(_, e) return %s end")
+            :format(buildPart(str))
         local loader, err = loadstring(source)
         if err then
             error(err)
@@ -189,11 +193,11 @@ end
 --
 --   * Tokens are alphanumeric strings including underscores.
 --   * Tokens can be separated by |, &, or surrounded by parentheses.
---   * Tokens can be prefixed with !, and are then operated on with a boolean 'not'.
+--   * Tokens can be prefixed with !, and are then inverted.
 --
 -- Examples are best:
---    'a|b|c' - Matches entities with an 'a' component OR a 'b' component or a 'c' component.
---    'a&!b&c' - Matches entities with an 'a' component AND NOT a 'b' component AND a 'c' component.
+--    'a|b|c' - Matches entities with an 'a' OR 'b' OR 'c'.
+--    'a&!b&c' - Matches entities with an 'a' AND NOT 'b' AND 'c'.
 --    'a|(b&c&d)|e - Matches 'a' OR ('b' AND 'c' AND 'd') OR 'e'
 -- @param pattern
 function tiny.filter(pattern)
@@ -271,13 +275,13 @@ end
 -- in the next update, if it has one. This is usually managed by tiny-ecs, so
 -- users should mostly ignore this, too.
 --
--- There is another option to (hopefully) increase performance in systems that have
--- items added to or removed from them often, and have lots of entities in them.
--- Setting the `nocache' field of the system might improve performance. It is still
--- experimental. There are some restriction to systems without caching, however.
---   * There is no `entities` table.
---   * Callbacks such onAdd, onRemove, and onModify will never be called
---   * Noncached systems cannot be sorted (There is no entities list to sort).
+-- There is another option to (hopefully) increase performance in systems that
+-- have items added to or removed from them often, and have lots of entities in
+-- them.  Setting the `nocache' field of the system might improve performance.
+-- It is still experimental. There are some restriction to systems without
+-- caching, however.  * There is no `entities` table.  * Callbacks such onAdd,
+-- onRemove, and onModify will never be called * Noncached systems cannot be
+-- sorted (There is no entities list to sort).
 --
 -- @section System
 
@@ -782,7 +786,8 @@ function tiny.update(world, dt, filter)
     for i = #systems, 1, -1 do
         local system = systems[i]
         local preWrap = system.preWrap
-        if preWrap and system.active and ((not filter) or filter(world, system)) then
+        if preWrap and system.active and
+            ((not filter) or filter(world, system)) then
             preWrap(system, dt)
         end
     end
@@ -824,7 +829,8 @@ function tiny.update(world, dt, filter)
     for i = 1, #systems do
         local system = systems[i]
         local postWrap = system.postWrap
-        if postWrap and system.active and ((not filter) or filter(world, system)) then
+        if postWrap and system.active and
+            ((not filter) or filter(world, system)) then
             postWrap(system, dt)
         end
     end
