@@ -2,7 +2,7 @@ package = "tiny-ecs"
 version = "1.2-1"
 source = {
     url = "git://github.com/bakpakin/tiny-ecs",
-    tag = "1.2-1"
+    tag = version
 }
 description = {
     summary = "Entity Component System for Lua.",
