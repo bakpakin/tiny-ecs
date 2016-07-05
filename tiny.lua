@@ -41,7 +41,6 @@ local tiny_addSystem
 local tiny_add
 local tiny_removeEntity
 local tiny_removeSystem
-local tiny_remove
 
 --- Filter functions.
 -- A Filter is a function that selects which Entities apply to a System.
@@ -330,7 +329,7 @@ local function processingSystemUpdate(system, dt)
 end
 
 -- Sorts Systems by a function system.sortDelegate(entity1, entity2) on modify.
-local function sortedSystemOnModify(system, dt)
+local function sortedSystemOnModify(system)
     local entities = system.entities
     local indices = system.indices
     local sortDelegate = system.sortDelegate
@@ -529,7 +528,6 @@ function tiny.remove(world, ...)
     end
     return ...
 end
-tiny_remove = tiny.remove
 
 -- Adds and removes Systems that have been marked from the World.
 function tiny_manageSystems(world)
@@ -863,12 +861,6 @@ function tiny.getSystemCount(world)
     return #(world.systems)
 end
 
---- Gets the index of the System in the World.
--- A simpler alternative is `system.index`.
-function tiny.getSystemIndex(world, system)
-    return system.index
-end
-
 --- Sets the index of a System in the World, and returns the old index. Changes
 -- the order in which they Systems processed, because lower indexed Systems are
 -- processed first. Returns the old system.index.
@@ -905,10 +897,9 @@ worldMetaTable = {
         clearSystems = tiny.clearSystems,
         getEntityCount = tiny.getEntityCount,
         getSystemCount = tiny.getSystemCount,
-        getSystemIndex = tiny.getSystemIndex,
         setSystemIndex = tiny.setSystemIndex
     },
-    __tostring = function(self)
+    __tostring = function()
         return "<tiny-ecs_World>"
     end
 }
