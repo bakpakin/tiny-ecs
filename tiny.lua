@@ -809,9 +809,7 @@ function tiny.update(world, dt, filter)
                     local bufferedTime = (system.bufferedTime or 0) + dt
                     while bufferedTime >= interval do
                         bufferedTime = bufferedTime - interval
-                        if update then
-                            update(system, interval)
-                        end
+                        update(system, interval)
                     end
                     system.bufferedTime = bufferedTime
                 else
