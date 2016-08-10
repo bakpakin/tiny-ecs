@@ -434,14 +434,9 @@ function tiny.world(...)
         -- Set of Entities
         entities = {},
 
-        -- List of Entities
-        entityList = {},
-
-        -- Number of Entities in World
-        entityCount = 0,
-
         -- List of Systems
         systems = {}
+
     }, worldMetaTable)
 
     tiny_add(ret, ...)
@@ -533,7 +528,7 @@ function tiny_manageSystems(world)
     world.systemsToAdd = {}
     world.systemsToRemove = {}
 
-    local worldEntityList = world.entityList
+    local worldEntityList = world.entities
     local systems = world.systems
 
     -- Remove Systems
@@ -625,19 +620,16 @@ function tiny_manageEntities(world)
     world.entitiesToRemove = {}
 
     local entities = world.entities
-    local entityList = world.entityList
     local systems = world.systems
-    local entityCount = world.entityCount
 
     -- Change Entities
     for i = 1, #e2c do
         local entity = e2c[i]
         -- Add if needed
         if not entities[entity] then
-            local index = #entityList + 1
+            local index = #entities + 1
             entities[entity] = index
-            entityList[index] = entity
-            entityCount = entityCount + 1
+            entities[index] = entity
         end
         for j = 1, #systems do
             local system = systems[j]
@@ -681,12 +673,11 @@ function tiny_manageEntities(world)
         local listIndex = entities[entity]
         if listIndex then
             -- Remove Entity from world state
-            local lastEntity = entityList[#entityList]
+            local lastEntity = entities[#entities]
             entities[lastEntity] = listIndex
             entities[entity] = nil
-            entityList[listIndex] = lastEntity
-            entityList[#entityList] = nil
-            entityCount = entityCount - 1
+            entities[listIndex] = lastEntity
+            entities[#entities] = nil
             -- Remove from cached systems
             for j = 1, #systems do
                 local system = systems[j]
@@ -710,9 +701,6 @@ function tiny_manageEntities(world)
             end
         end
     end
-
-    -- Update Entity count
-    world.entityCount = entityCount
 end
 
 --- Manages Entities and Systems marked for deletion or addition. Call this
@@ -801,7 +789,7 @@ end
 
 --- Removes all Entities from the World.
 function tiny.clearEntities(world)
-    local el = world.entityList
+    local el = world.entities
     for i = 1, #el do
         tiny_removeEntity(world, el[i])
     end
@@ -817,12 +805,12 @@ end
 
 --- Gets number of Entities in the World.
 function tiny.getEntityCount(world)
-    return world.entityCount
+    return #world.entities
 end
 
 --- Gets number of Systems in World.
 function tiny.getSystemCount(world)
-    return #(world.systems)
+    return #world.systems
 end
 
 --- Sets the index of a System in the World, and returns the old index. Changes
