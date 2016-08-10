@@ -45,7 +45,9 @@ local tiny_removeSystem
 --- Filter functions.
 -- A Filter is a function that selects which Entities apply to a System.
 -- Filters take two parameters, the System and the Entity, and return a boolean
--- value indicating if the Entity should be processed by the System.
+-- value indicating if the Entity should be processed by the System. A truthy
+-- value includes the entity, while a falsey (nil or false) value excludes the
+-- entity.
 --
 -- Filters must be added to Systems by setting the `filter` field of the System.
 -- Filter's returned by tiny-ecs's Filter functions are immutable and can be
