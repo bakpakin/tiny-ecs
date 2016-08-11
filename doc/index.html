@@ -53,7 +53,7 @@
 </p>
     <h3>Info:</h3>
     <ul>
-        <li><strong>Copyright</strong>: 2015</li>
+        <li><strong>Copyright</strong>: 2016</li>
         <li><strong>License</strong>: MIT</li>
         <li><strong>Author</strong>: Calvin Rose</li>
     </ul>
@@ -125,7 +125,7 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.removeEntity">tiny.removeEntity (world, entity)</a></td>
-	<td class="summary">Removes an Entity to the World.</td>
+	<td class="summary">Removes an Entity from the World.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#tiny.removeSystem">tiny.removeSystem (world, system)</a></td>
@@ -160,10 +160,6 @@
 	<td class="summary">Gets number of Systems in World.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#tiny.getSystemIndex">tiny.getSystemIndex (world, system)</a></td>
-	<td class="summary">Gets the index of the System in the World.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#tiny.setSystemIndex">tiny.setSystemIndex (world, system, index)</a></td>
 	<td class="summary">Sets the index of a System in the World, and returns the old index.</td>
 	</tr>
@@ -180,7 +176,9 @@
 
 <p> A Filter is a function that selects which Entities apply to a System.
  Filters take two parameters, the System and the Entity, and return a boolean
- value indicating if the Entity should be processed by the System.</p>
+ value indicating if the Entity should be processed by the System. A truthy
+ value includes the entity, while a falsey (nil or false) value excludes the
+ entity.</p>
 
 <p> Filters must be added to Systems by setting the <a href="index.html#tiny.filter">filter</a> field of the System.
  Filter's returned by tiny-ecs's Filter functions are immutable and can be
@@ -292,12 +290,12 @@ filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
 <ul>
     <li>Tokens are alphanumeric strings including underscores.</li>
     <li>Tokens can be separated by |, &amp;, or surrounded by parentheses.</li>
-    <li>Tokens can be prefixed with !, and are then operated on with a boolean 'not'.</li>
+    <li>Tokens can be prefixed with !, and are then inverted.</li>
 </ul>
 
 <p> Examples are best:</p>
-<pre><code>'a|b|c' - Matches entities with an 'a' component OR a 'b' component or a 'c' component.
-'a&amp;!b&amp;c' - Matches entities with an 'a' component AND NOT a 'b' component AND a 'c' component.
+<pre><code>'a|b|c' - Matches entities with an 'a' OR 'b' OR 'c'.
+'a&amp;!b&amp;c' - Matches entities with an 'a' AND NOT 'b' AND 'c'.
 'a|(b&amp;c&amp;d)|e - Matches 'a' OR ('b' AND 'c' AND 'd') OR 'e'
 </code></pre>
 
@@ -313,9 +311,7 @@ filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
     <h2 class="section-header has-description"><a name="System_functions"></a>System functions </h2>
 
           <div class="section-description">
-
-
-<p> A System is a wrapper around function callbacks for manipulating Entities.
+           A System is a wrapper around function callbacks for manipulating Entities.
  Systems are implemented as tables that contain at least one method;
  an update function that takes parameters like so:</p>
 
@@ -339,12 +335,25 @@ filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
     to the World, before any entities are added to the system.</li>
     <li><code>function system:onRemoveFromWorld(world)</code> - Called when the System is
     removed from the world, after all Entities are removed from the System.</li>
+    <li><code>function system:preWrap(dt)</code> - Called on each system before update is
+    called on any system.</li>
+    <li><code>function system:postWrap(dt) - Called on each system in reverse order
+    after update is called on each system. The idea behind </code>preWrap<code> and
+    </code>postWrap<code> is to allow for systems that modify the behavior of other systems.
+    Say there is a DrawingSystem, which draws sprites to the screen, and a
+    PostProcessingSystem, that adds some blur and bloom effects. In the preWrap
+    method of the PostProcessingSystem, the System could set the drawing target
+    for the DrawingSystem to a special buffer instead the screen. In the postWrap
+    method, the PostProcessingSystem could then modify the buffer and render it
+    to the screen. In this setup, the PostProcessingSystem would be added to the
+    World after the drawingSystem (A similar but less flexible behavior could
+    be accomplished with a single custom update function in the DrawingSystem).</li>
 </ul>
 
-<p> For Filters, it is convenient to use <a href="index.html#tiny.requireAll">tiny.requireAll</a> or <a href="index.html#tiny.requireAny">tiny.requireAny</a>,
+<p> For Filters, it is convenient to use </code>tiny.requireAll<code> or </code>tiny.requireAny<code>,
  but one can write their own filters as well. Set the Filter of a System like
  so:</p>
-<pre><code>system.filter = tiny.requireAll("a", "b", "c")
+<pre><code>system.filter = tiny.requireAll(&amp;quot;a&amp;quot;, &amp;quot;b&amp;quot;, &amp;quot;c&amp;quot;)
 </code></pre>
 <p> or</p>
 <pre><code>function system:filter(entity)
@@ -357,29 +366,35 @@ end
  commonly used.</p>
 
 <ul>
-    <li>The <a href="index.html#tiny.world">world</a> field points to the World that the System belongs to. Useful
+    <li>The </code>world<code> field points to the World that the System belongs to. Useful
     for adding and removing Entities from the world dynamically via the System.</li>
-    <li>The <code>active</code> flag is whether or not the System is updated automatically.
+    <li>The </code>active<code> flag is whether or not the System is updated automatically.
     Inactive Systems should be updated manually or not at all via
-    <code>system:update(dt)</code>. Defaults to true.</li>
-    <li>The <code>entities</code> field is an ordered list of Entities in the System. This
+    </code>system:update(dt)<code>. Defaults to true.</li>
+    <li>The </code>entities<code> field is an ordered list of Entities in the System. This
     list can be used to quickly iterate through all Entities in a System.</li>
-    <li>The <code>interval</code> field is an optional field that makes Systems update at
+    <li>The </code>interval<code> field is an optional field that makes Systems update at
     certain intervals using buffered time, regardless of World update frequency.
-    For example, to make a System update once a second, set the System's interval
+    For example, to make a System update once a second, set the System&apos;s interval
     to 1.</li>
-    <li>The <code>index</code> field is the System's index in the World. Lower indexed
-    Systems are processed before higher indices. The <code>index</code> is a read only
-    field; to set the <code>index</code>, use <code>tiny.setSystemIndex(world, system)</code>.</li>
-    <li>The <code>indices</code> field is a table of Entity keys to their indices in the
-    <code>entities</code> list. Most Systems can ignore this.</li>
-    <li>The <code>modified</code> flag is an indicator if the System has been modified in
-    the last update. If so, the <code>onModify</code> callback will be called on the System
+    <li>The </code>index<code> field is the System&apos;s index in the World. Lower indexed
+    Systems are processed before higher indices. The </code>index<code> is a read only
+    field; to set the </code>index<code>, use </code>tiny.setSystemIndex(world, system)<code>.</li>
+    <li>The </code>indices<code> field is a table of Entity keys to their indices in the
+    </code>entities<code> list. Most Systems can ignore this.</li>
+    <li>The </code>modified<code> flag is an indicator if the System has been modified in
+    the last update. If so, the </code>onModify<code> callback will be called on the System
     in the next update, if it has one. This is usually managed by tiny-ecs, so
     users should mostly ignore this, too.</li>
 </ul>
 
-
+<p> There is another option to (hopefully) increase performance in systems that
+ have items added to or removed from them often, and have lots of entities in
+ them.  Setting the </code>nocache' field of the system might improve performance.
+ It is still experimental. There are some restriction to systems without
+ caching, however.  * There is no <code>entities</code> table.  * Callbacks such onAdd,
+ onRemove, and onModify will never be called * Noncached systems cannot be
+ sorted (There is no entities list to sort).
           </div>
     <dl class="function">
     <dt>
@@ -549,7 +564,7 @@ end
     <strong>tiny.removeEntity (world, entity)</strong>
     </dt>
     <dd>
-    Removes an Entity to the World.  Returns the Entity.
+    Removes an Entity from the World.  Returns the Entity.
 
 
 
@@ -677,21 +692,6 @@ end
 
 </dd>
     <dt>
-    <a name = "tiny.getSystemIndex"></a>
-    <strong>tiny.getSystemIndex (world, system)</strong>
-    </dt>
-    <dd>
-    Gets the index of the System in the World.
- A simpler alternative is <code>system.index</code>.
-
-
-
-
-
-
-
-</dd>
-    <dt>
     <a name = "tiny.setSystemIndex"></a>
     <strong>tiny.setSystemIndex (world, system, index)</strong>
     </dt>
@@ -714,7 +714,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2016-03-05 16:37:42 </i>
+<i style="float:right;">Last updated 2016-08-10 21:34:56 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
