@@ -230,7 +230,7 @@ end
 -- removed from the world, after all Entities are removed from the System.
 --   * `function system:preWrap(dt)` - Called on each system before update is
 -- called on any system.
---   * `function system:postWrap(dt) - Called on each system in reverse order
+--   * `function system:postWrap(dt)` - Called on each system in reverse order
 -- after update is called on each system. The idea behind `preWrap` and
 -- `postWrap` is to allow for systems that modify the behavior of other systems.
 -- Say there is a DrawingSystem, which draws sprites to the screen, and a
