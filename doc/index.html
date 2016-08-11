@@ -337,9 +337,9 @@ filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
     removed from the world, after all Entities are removed from the System.</li>
     <li><code>function system:preWrap(dt)</code> - Called on each system before update is
     called on any system.</li>
-    <li><code>function system:postWrap(dt) - Called on each system in reverse order
-    after update is called on each system. The idea behind </code>preWrap<code> and
-    </code>postWrap<code> is to allow for systems that modify the behavior of other systems.
+    <li><code>function system:postWrap(dt)</code> - Called on each system in reverse order
+    after update is called on each system. The idea behind <code>preWrap</code> and
+    <code>postWrap</code> is to allow for systems that modify the behavior of other systems.
     Say there is a DrawingSystem, which draws sprites to the screen, and a
     PostProcessingSystem, that adds some blur and bloom effects. In the preWrap
     method of the PostProcessingSystem, the System could set the drawing target
@@ -350,10 +350,10 @@ filter = tiny.requireAll("image", tiny.rejectAny("Player", "Enemy"))
     be accomplished with a single custom update function in the DrawingSystem).</li>
 </ul>
 
-<p> For Filters, it is convenient to use </code>tiny.requireAll<code> or </code>tiny.requireAny<code>,
+<p> For Filters, it is convenient to use <a href="index.html#tiny.requireAll">tiny.requireAll</a> or <a href="index.html#tiny.requireAny">tiny.requireAny</a>,
  but one can write their own filters as well. Set the Filter of a System like
  so:</p>
-<pre><code>system.filter = tiny.requireAll(&amp;quot;a&amp;quot;, &amp;quot;b&amp;quot;, &amp;quot;c&amp;quot;)
+<pre><code>system.filter = tiny.requireAll("a", "b", "c")
 </code></pre>
 <p> or</p>
 <pre><code>function system:filter(entity)
@@ -366,33 +366,33 @@ end
  commonly used.</p>
 
 <ul>
-    <li>The </code>world<code> field points to the World that the System belongs to. Useful
+    <li>The <a href="index.html#tiny.world">world</a> field points to the World that the System belongs to. Useful
     for adding and removing Entities from the world dynamically via the System.</li>
-    <li>The </code>active<code> flag is whether or not the System is updated automatically.
+    <li>The <code>active</code> flag is whether or not the System is updated automatically.
     Inactive Systems should be updated manually or not at all via
-    </code>system:update(dt)<code>. Defaults to true.</li>
-    <li>The </code>entities<code> field is an ordered list of Entities in the System. This
+    <code>system:update(dt)</code>. Defaults to true.</li>
+    <li>The <code>entities</code> field is an ordered list of Entities in the System. This
     list can be used to quickly iterate through all Entities in a System.</li>
-    <li>The </code>interval<code> field is an optional field that makes Systems update at
+    <li>The <code>interval</code> field is an optional field that makes Systems update at
     certain intervals using buffered time, regardless of World update frequency.
-    For example, to make a System update once a second, set the System&apos;s interval
+    For example, to make a System update once a second, set the System's interval
     to 1.</li>
-    <li>The </code>index<code> field is the System&apos;s index in the World. Lower indexed
-    Systems are processed before higher indices. The </code>index<code> is a read only
-    field; to set the </code>index<code>, use </code>tiny.setSystemIndex(world, system)<code>.</li>
-    <li>The </code>indices<code> field is a table of Entity keys to their indices in the
-    </code>entities<code> list. Most Systems can ignore this.</li>
-    <li>The </code>modified<code> flag is an indicator if the System has been modified in
-    the last update. If so, the </code>onModify<code> callback will be called on the System
+    <li>The <code>index</code> field is the System's index in the World. Lower indexed
+    Systems are processed before higher indices. The <code>index</code> is a read only
+    field; to set the <code>index</code>, use <code>tiny.setSystemIndex(world, system)</code>.</li>
+    <li>The <code>indices</code> field is a table of Entity keys to their indices in the
+    <code>entities</code> list. Most Systems can ignore this.</li>
+    <li>The <code>modified</code> flag is an indicator if the System has been modified in
+    the last update. If so, the <code>onModify</code> callback will be called on the System
     in the next update, if it has one. This is usually managed by tiny-ecs, so
     users should mostly ignore this, too.</li>
 </ul>
 
 <p> There is another option to (hopefully) increase performance in systems that
  have items added to or removed from them often, and have lots of entities in
- them.  Setting the </code>nocache' field of the system might improve performance.
+ them.  Setting the <code>nocache&apos; field of the system might improve performance.
  It is still experimental. There are some restriction to systems without
- caching, however.  * There is no <code>entities</code> table.  * Callbacks such onAdd,
+ caching, however.  * There is no </code>entities` table.  * Callbacks such onAdd,
  onRemove, and onModify will never be called * Noncached systems cannot be
  sorted (There is no entities list to sort).
           </div>
@@ -714,7 +714,7 @@ end
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2016-08-10 21:34:56 </i>
+<i style="float:right;">Last updated 2016-08-10 21:42:26 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>
