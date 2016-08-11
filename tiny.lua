@@ -278,11 +278,13 @@ end
 --
 -- There is another option to (hopefully) increase performance in systems that
 -- have items added to or removed from them often, and have lots of entities in
--- them.  Setting the `nocache' field of the system might improve performance.
+-- them.  Setting the `nocache` field of the system might improve performance.
 -- It is still experimental. There are some restriction to systems without
--- caching, however.  * There is no `entities` table.  * Callbacks such onAdd,
--- onRemove, and onModify will never be called * Noncached systems cannot be
--- sorted (There is no entities list to sort).
+-- caching, however.
+--
+--   * There is no `entities` table.
+--   * Callbacks such onAdd, onRemove, and onModify will never be called
+--   * Noncached systems cannot be sorted (There is no entities list to sort).
 --
 -- @section System
 
