@@ -37,6 +37,8 @@ local select = select
 local tiny_manageEntities
 local tiny_manageSystems
 local tiny_addEntity
+local tiny_addComponent
+local tiny_removeComponent
 local tiny_addSystem
 local tiny_add
 local tiny_removeEntity
@@ -460,6 +462,22 @@ function tiny.addEntity(world, entity)
 end
 tiny_addEntity = tiny.addEntity
 
+--- Adds a component to an Entity in the world
+-- Shortcut for calling addEntity after adding a component. Returns the entity.
+function tiny.addComponent(world, entity, component_name, component_object)
+    entity[component_name] = component_object
+    return tiny.addEntity(world, entity)
+end
+tiny_addComponent = tiny.addComponent
+
+--- Removes a component from an Entity in the world
+-- Shortcut for calling addEntity after removing a component. Returns the entity.
+function tiny.removeComponent(world, entity, component_name)
+    entity[component_name] = nil
+    return tiny.addEntity(world, entity)
+end
+tiny_removeComponent = tiny.removeComponent
+
 --- Adds a System to the world. Returns the System.
 function tiny.addSystem(world, system)
     assert(system.world == nil, "System already belongs to a World.")
@@ -843,6 +861,8 @@ worldMetaTable = {
     __index = {
         add = tiny.add,
         addEntity = tiny.addEntity,
+        addComponent = tiny.addComponent,
+        removeComponent = tiny.removeComponent,
         addSystem = tiny.addSystem,
         remove = tiny.remove,
         removeEntity = tiny.removeEntity,
