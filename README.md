@@ -1,4 +1,4 @@
-# NOTE - Up to date version of this project are [here](https://github.com/bakpakin/CommandoKibbles)
+# NOTE - Up to date version of this project [here](https://github.com/bakpakin/CommandoKibbles)
 
 
 ![alt text](https://github.com/bakpakin/tiny-ecs/raw/demo-commandokibbles/preview.gif)
