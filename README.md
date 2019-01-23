@@ -1,5 +1,12 @@
 # tiny-ecs #
 
+## NOTE
+
+Although there have been almost no commits in several years, this
+project is not abandoned. tiny-ecs is for most intents and
+purposes, finished, and no bugs have been brought to my attention in a while.
+New issues on Github will be addressed.
+
 [![Build Status](https://travis-ci.org/bakpakin/tiny-ecs.png?branch=master)](https://travis-ci.org/bakpakin/tiny-ecs)[![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
 
 Tiny-ecs is an Entity Component System for Lua that's simple, flexible, and useful.
@@ -21,7 +28,7 @@ take an Entity as a parameter.
 
 ### Entities ###
 Entities are simply Lua tables of data that gets processed by Systems. Entities
-should contain primarily data rather than code, as it is the Systems's job to
+should contain primarily data rather than code, as it is the System's job to
 do logic on data. Henceforth, a key-value pair in an Entity will
 be referred to as a Component.
 
