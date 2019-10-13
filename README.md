@@ -3,9 +3,9 @@
 ## NOTE
 
 Although there have been almost no commits in several years, this
-project is not abandoned. tiny-ecs is for most intents and
+project is not abandoned. tiny-ecs is, for most intents and
 purposes, finished, and no bugs have been brought to my attention in a while.
-New issues on Github will be addressed.
+New issues on GitHub will be addressed.
 
 [![Build Status](https://travis-ci.org/bakpakin/tiny-ecs.png?branch=master)](https://travis-ci.org/bakpakin/tiny-ecs)[![License](http://img.shields.io/badge/Licence-MIT-brightgreen.svg)](LICENSE)
 
@@ -15,11 +15,11 @@ for simulating large and complex systems. For more explanation on Entity
 Component Systems, here is some
 [basic info](http://en.wikipedia.org/wiki/Entity_component_system "Wikipedia").
 
-Tiny-ecs also works well with objected oriented programming in Lua because
+Tiny-ecs also works well with object-oriented programming in Lua because
 Systems and Entities do not use metatables. This means you can subclass your
-Systems and Entities, and use existing Lua class frameworks with tiny-ecs, no problem.
+Systems and Entities and use existing Lua class frameworks with tiny-ecs, no problem.
 For an example on how to use tiny-ecs with object-oriented Lua, take a look at the
-demo branch, specifically the systems and entities sub-directories.
+demo branch, specifically the systems and entities subdirectories.
 
 ## Overview ##
 Tiny-ecs has four important types: Worlds, Filters, Systems, and Entities.
@@ -75,10 +75,10 @@ end
 
 ## Use It ##
 Copy paste tiny.lua into your source folder. For stability and consistent API,
-please use a tagged release or use luarocks.
+please use a tagged release or use LuaRocks.
 
 ## Luarocks ##
-Tiny-ecs is also on [Luarocks](https://luarocks.org/) and can be installed with
+Tiny-ecs is also on [LuaRocks](https://luarocks.org/) and can be installed with
 `luarocks install tiny-ecs`.
 
 ## Demo ##
