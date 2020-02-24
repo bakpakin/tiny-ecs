@@ -309,7 +309,7 @@ local function processingSystemUpdate(system, dt)
 
     if process then
         if system.nocache then
-            local entities = system.world.entityList
+            local entities = system.world.entities
             local filter = system.filter
             if filter then
                 for i = 1, #entities do
