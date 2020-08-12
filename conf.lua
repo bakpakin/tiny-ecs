@@ -1,6 +1,6 @@
 function love.conf(t)
     t.identity = nil
-    t.version = "0.10.1"
+    t.version = "11.3"
     t.console = false
     t.window.title = "Commando Kibbles"
     t.window.icon = nil
