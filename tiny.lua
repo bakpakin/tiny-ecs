@@ -821,6 +821,7 @@ end
 -- the order in which they Systems processed, because lower indexed Systems are
 -- processed first. Returns the old system.index.
 function tiny.setSystemIndex(world, system, index)
+    tiny_manageSystems(world)
     local oldIndex = system.index
     local systems = world.systems
 
