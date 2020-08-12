@@ -32,9 +32,9 @@ end
 
 function love.draw()
 	if paused then
-		love.graphics.setColor(90, 90, 90, 255)
+		love.graphics.setColor(0.35, 0.35, 0.35, 1)
 		love.graphics.draw(pauseCanvas, 0, 0)
-		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.setFont(assets.fnt_hud)
 		love.graphics.printf("Paused - P to Resume", love.graphics.getWidth() * 0.5 - 125, love.graphics.getHeight() * 0.4, 250, "center")
 	else

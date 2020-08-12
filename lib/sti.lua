@@ -876,9 +876,9 @@ function Map:draw()
 end
 
 function Map:drawLayer(layer)
-	framework.setColor(255, 255, 255, 255 * layer.opacity)
+	framework.setColor(1, 1, 1, layer.opacity)
 	layer:draw()
-	framework.setColor(255, 255, 255, 255)
+	framework.setColor(1, 1, 1, 1)
 end
 
 function Map:drawTileLayer(layer)
@@ -919,10 +919,10 @@ function Map:drawObjectLayer(layer)
 
 	assert(layer.type == "objectgroup", "Invalid layer type: " .. layer.type .. ". Layer must be of type: objectgroup")
 
-	local line		= { 160, 160, 160, 255 * layer.opacity }
-	local fill		= { 160, 160, 160, 255 * layer.opacity * 0.2 }
-	local shadow	= { 0, 0, 0, 255 * layer.opacity }
-	local reset		= { 255, 255, 255, 255 * layer.opacity }
+	local line		= { 0.63, 0.63, 0.63, layer.opacity }
+	local fill		= { 0.63, 0.63, 0.63, layer.opacity * 0.2 }
+	local shadow	= { 0, 0, 0, layer.opacity }
+	local reset		= { 1, 1, 1, layer.opacity }
 
 	local function sortVertices(obj)
 		local vertices = {{},{}}

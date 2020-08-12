@@ -18,7 +18,7 @@ end
 
 function TransitionScreen:drawHud(dt)
 	local r1, g1, b1, a = love.graphics.getColor()
-    love.graphics.setColor(0, 0, 0, self.alpha * 255)
+    love.graphics.setColor(0, 0, 0, self.alpha)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setColor(r1, g1, b1, a)
 end
