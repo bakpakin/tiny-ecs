@@ -817,6 +817,25 @@ function tiny.getSystemCount(world)
     return #world.systems
 end
 
+--- Gets entities according to filter (not in base)
+function tiny.filterWorld(world, filter)
+    local t = {}
+    for i = 1, #(world.entities) do
+        if ((not filter) or filter(world, world.entities[i])) then
+            table.insert(t, world.entities[i])
+        end
+    end
+    local index = 0
+    return function()
+        index = index + 1
+        if index <= #t then
+            return t[index]
+        end
+    end
+end
+
+
+
 --- Sets the index of a System in the World, and returns the old index. Changes
 -- the order in which they Systems processed, because lower indexed Systems are
 -- processed first. Returns the old system.index.
@@ -854,7 +873,9 @@ worldMetaTable = {
         clearSystems = tiny.clearSystems,
         getEntityCount = tiny.getEntityCount,
         getSystemCount = tiny.getSystemCount,
-        setSystemIndex = tiny.setSystemIndex
+        setSystemIndex = tiny.setSystemIndex,
+        
+        filterWorld = tiny.filterWorld
     },
     __tostring = function()
         return "<tiny-ecs_World>"
